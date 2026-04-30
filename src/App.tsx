@@ -72,7 +72,7 @@ const problems = [
   {
     icon: Coins,
     title: "Small amounts nobody bothers to chase",
-    desc: "₦150 here. ₦300 there. Too small to notice individually — until you add up a year's worth.",
+    desc: "₦150 here. ₦300 there. Too small to notice individually, until you add up a year's worth.",
   },
 ];
 
@@ -175,7 +175,7 @@ const faqs = [
   },
   {
     q: "How does KoboBack make money?",
-    a: "We charge a small success fee — a percentage of the amount you recover. If nothing is found, or recovery fails, you pay nothing.",
+    a: "We charge a small success fee, a percentage of the amount you recover. If nothing is found, or recovery fails, you pay nothing.",
   },
   {
     q: "What if no errors are found in my statement?",
@@ -411,8 +411,8 @@ export default function App() {
             {/* Sub-headline */}
             <p className="mt-6 text-[17px] text-slate-500 leading-relaxed max-w-[520px]">
               KoboBack scans your bank statement using AI to detect hidden
-              charges, failed transaction refunds, and billing errors — then
-              helps you recover what you're owed. No upfront cost.
+              charges, failed transaction refunds, and billing errors,then helps
+              you recover what you're owed. No upfront cost.
             </p>
 
             {/* CTAs */}
@@ -504,7 +504,7 @@ export default function App() {
             </h2>
             <p className="mt-4 text-[15px] text-slate-500 leading-relaxed">
               It happens quietly. Small deductions. Failed refunds. Charges with
-              no explanation. Most people never notice — and banks aren't going
+              no explanation. Most people never notice, and banks aren't going
               to raise the issue themselves.
             </p>
           </motion.div>
@@ -692,7 +692,7 @@ export default function App() {
               <p className="mt-5 text-[15px] text-slate-400 leading-relaxed max-w-[420px]">
                 Most tools only monitor transactions going forward. KoboBack
                 looks backward into your history to find errors that have
-                already happened — ones you may have absorbed months ago without
+                already happened, ones you may have absorbed months ago without
                 knowing.
               </p>
               <a
@@ -874,11 +874,17 @@ export default function App() {
                   </p>
                   <p className="mt-2 text-[12px] text-slate-400">
                     By joining, you agree to our{" "}
-                    <Link to="/terms" className="text-slate-600 underline underline-offset-2 hover:text-slate-900 transition-colors">
+                    <Link
+                      to="/terms"
+                      className="text-slate-600 underline underline-offset-2 hover:text-slate-900 transition-colors"
+                    >
                       Terms of Service
                     </Link>{" "}
                     and{" "}
-                    <Link to="/privacy" className="text-slate-600 underline underline-offset-2 hover:text-slate-900 transition-colors">
+                    <Link
+                      to="/privacy"
+                      className="text-slate-600 underline underline-offset-2 hover:text-slate-900 transition-colors"
+                    >
                       Privacy Policy
                     </Link>
                     .

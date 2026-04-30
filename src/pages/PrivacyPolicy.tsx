@@ -26,8 +26,8 @@ export default function PrivacyPolicy() {
           may be owed by their bank.
         </P>
         <P>
-          We understand that the data you share with us — including your
-          financial records — is among the most sensitive information that
+          We understand that the data you share with us, including your
+          financial records, is among the most sensitive information that
           exists. This Privacy Policy explains precisely what data we collect,
           why we collect it, how we protect it, and what rights you have over
           it.
@@ -186,7 +186,7 @@ export default function PrivacyPolicy() {
           <Ul
             items={[
               "Sending service-related notifications (scan complete, recovery update, etc.)",
-              "Sending product updates or educational content about bank consumer rights — with your consent only",
+              "Sending product updates or educational content about bank consumer rights, with your consent only",
             ]}
           />
           <P>

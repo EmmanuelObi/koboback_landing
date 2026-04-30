@@ -123,8 +123,8 @@ export default function Terms() {
 
         <SubSection title="5.2 Paid Audit">
           <P>
-            A detailed audit report — including itemised findings, error
-            classifications, and a full estimated recovery breakdown — is
+            A detailed audit report, including itemised findings, error
+            classifications, and a full estimated recovery breakdown, is
             available as a paid feature. The current fee for a paid audit is
             displayed on our pricing page and is subject to change. Fees are
             charged at the time of requesting the detailed report.
@@ -146,8 +146,8 @@ export default function Terms() {
         <SubSection title="5.4 Success Fee (Recovery Assistance)">
           <P>
             Where KoboBack actively assists you in recovering funds from your
-            bank — including preparing formal dispute communications on your
-            behalf — we charge a success fee. This fee is:
+            bank, including preparing formal dispute communications on your
+            behalf, we charge a success fee. This fee is:
           </P>
           <Ul
             items={[
@@ -243,7 +243,7 @@ export default function Terms() {
         <P>To the maximum extent permitted by applicable Nigerian law:</P>
         <Ul
           items={[
-            "KoboBack's total aggregate liability to you for any claim arising from these Terms or the use of our Service shall not exceed the total amount you have paid to KoboBack in the three (3) months preceding the event giving rise to the claim, or ₦50,000 — whichever is greater",
+            "KoboBack's total aggregate liability to you for any claim arising from these Terms or the use of our Service shall not exceed the total amount you have paid to KoboBack in the three (3) months preceding the event giving rise to the claim, or ₦50,000, whichever is greater",
             "KoboBack shall not be liable for any indirect, incidental, consequential, special, or punitive damages, including loss of profit, loss of data, loss of opportunity, or reputational harm, even if we have been advised of the possibility of such damages",
             "We are not liable for the actions or decisions of any financial institution in response to a dispute you raise, whether or not that dispute was initiated with our assistance",
           ]}
@@ -259,9 +259,9 @@ export default function Terms() {
       <Section title="9. Intellectual Property">
         <SubSection title="9.1 KoboBack's IP">
           <P>
-            All intellectual property in the KoboBack platform — including our
+            All intellectual property in the KoboBack platform, including our
             software, AI models, analysis methodologies, design, trademarks, and
-            content — belongs exclusively to KoboBack. Nothing in these Terms
+            content, belongs exclusively to KoboBack. Nothing in these Terms
             grants you a licence to reproduce, modify, distribute, or
             commercially exploit any part of our intellectual property.
           </P>

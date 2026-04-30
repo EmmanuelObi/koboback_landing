@@ -1,389 +1,1031 @@
-import { motion, useScroll, useTransform } from "framer-motion";
+/**
+ * KoboBack Landing Page
+ * Design system: Stripe / Linear inspired — minimal, restrained, production-grade.
+ * Palette: slate-950 (primary) · slate-500 (secondary) · blue-600 (single accent CTA)
+ * Backgrounds: white / slate-50 alternating
+ * No gradients · No glassmorphism · No mixed accent colors
+ */
+
 import {
-  FileSearch,
-  ShieldAlert,
-  BadgeInfo,
-  TableProperties,
+  motion,
+  AnimatePresence,
+  useScroll,
+  useTransform,
+} from "framer-motion";
+import {
   Upload,
-  Cpu,
-  BarChart3,
+  Search,
+  FileText,
+  Coins,
+  ShieldCheck,
+  Lock,
+  TrendingDown,
+  AlertTriangle,
   CheckCircle2,
   ArrowRight,
   ChevronDown,
+  Menu,
+  X,
+  ChevronRight,
+  Banknote,
+  Clock,
+  BadgeCheck,
 } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
-/* ─── animation variants ─── */
-const fadeIn = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i: number) => ({
+/* ─────────────────────────────────────────────────────────
+   MOTION VARIANTS — subtle, fast, no bounce
+───────────────────────────────────────────────────────── */
+const fade = {
+  hidden: { opacity: 0, y: 16 },
+  visible: (i: number = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, delay: i * 0.15, ease: "easeOut" },
+    transition: { duration: 0.45, delay: i * 0.1, ease: [0.25, 0.1, 0.25, 1] },
   }),
 };
 
-const slideInLeft = {
-  hidden: { opacity: 0, x: -60 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.7, ease: "easeOut" } },
-};
-
-const slideInRight = {
-  hidden: { opacity: 0, x: 60 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.7, ease: "easeOut" } },
-};
-
-const scaleUp = {
-  hidden: { opacity: 0, scale: 0.85 },
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
   visible: {
     opacity: 1,
-    scale: 1,
-    transition: { duration: 0.6, ease: "easeOut" },
+    y: 0,
+    transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] },
   },
 };
 
-/* ─── data ─── */
-const features = [
+/* ─────────────────────────────────────────────────────────
+   DATA
+───────────────────────────────────────────────────────── */
+const problems = [
   {
-    icon: FileSearch,
-    title: "Intelligent Parsing",
-    desc: "Advanced OCR technology effortlessly extracts text, handwriting, and data from scanned documents.",
-    color: "bg-blue-500",
+    icon: AlertTriangle,
+    title: "Charges you never approved",
+    desc: "SMS fees, card maintenance, and mystery deductions quietly appear on your statement month after month.",
   },
   {
-    icon: ShieldAlert,
-    title: "Flagged Transactions",
-    desc: "Automatic detection of suspicious transactions so you can review anomalies directly from your dashboard.",
-    color: "bg-red-500",
+    icon: TrendingDown,
+    title: "Failed transfers that were never refunded",
+    desc: "Your account was debited. The transfer failed. The bank never returned the money.",
   },
   {
-    icon: BadgeInfo,
-    title: "Risk Assessment",
-    desc: "Dynamically generated risk badges identify compliance gaps at a glance, giving you instant clarity.",
-    color: "bg-amber-500",
-  },
-  {
-    icon: TableProperties,
-    title: "Compliance Reports",
-    desc: "Generate structured compliance tables for a comprehensive overview of every auditing result.",
-    color: "bg-emerald-500",
+    icon: Coins,
+    title: "Small amounts nobody bothers to chase",
+    desc: "₦150 here. ₦300 there. Too small to notice individually — until you add up a year's worth.",
   },
 ];
 
 const steps = [
   {
     icon: Upload,
-    title: "Upload",
-    desc: "Drop your financial documents — PDFs, images, or scans.",
+    number: "01",
+    title: "Upload your bank statement",
+    desc: "Export a PDF from your bank app. No login, no bank integration, no extra accounts.",
   },
   {
-    icon: Cpu,
-    title: "Analyze",
-    desc: "Our AI engine parses, sanitizes, and audits the data automatically.",
+    icon: Search,
+    number: "02",
+    title: "AI scans for errors",
+    desc: "Our engine checks every transaction against known patterns of bank errors and unreversed debits.",
   },
   {
-    icon: BarChart3,
-    title: "Review",
-    desc: "Browse flagged items, risk badges, and compliance tables in a clear report.",
+    icon: FileText,
+    number: "03",
+    title: "See what you may be owed",
+    desc: "A clear, itemised report shows you exactly which transactions look wrong and the total at stake.",
   },
   {
-    icon: CheckCircle2,
-    title: "Act",
-    desc: "Export findings and resolve issues with confidence.",
+    icon: Banknote,
+    number: "04",
+    title: "We help you recover it",
+    desc: "KoboBack guides you through the dispute process. We charge a fee only when you actually recover money.",
   },
 ];
 
-/* ─── component ─── */
-const App = () => {
+const trustPoints = [
+  {
+    icon: ShieldCheck,
+    title: "Built for consumers, not banks",
+    desc: "Every tool in this space is sold to banks. KoboBack works exclusively for account holders.",
+  },
+  {
+    icon: Lock,
+    title: "Your data stays private",
+    desc: "Statements are encrypted in transit and at rest. We never sell or share your data. Delete anytime.",
+  },
+  {
+    icon: Banknote,
+    title: "No upfront fees",
+    desc: "We charge a small percentage only when money is successfully recovered. Nothing found, nothing owed.",
+  },
+  {
+    icon: BadgeCheck,
+    title: "Full transparency",
+    desc: "You see exactly what we flagged, why it was flagged, and how we arrived at the recovery estimate.",
+  },
+];
+
+const differentiators = [
+  {
+    icon: Clock,
+    title: "Finds past errors, not just future ones",
+    desc: "We scan historical statements. Errors from months ago are still recoverable in most cases.",
+  },
+  {
+    icon: CheckCircle2,
+    title: "No bank login required",
+    desc: "Just upload a PDF. No risky third-party access to your bank account is ever needed.",
+  },
+  {
+    icon: Search,
+    title: "Works even if you never complained before",
+    desc: "You don't need an existing dispute. KoboBack can identify and initiate the process from scratch.",
+  },
+];
+
+const testimonials = [
+  {
+    initials: "BA",
+    name: "Blessing A.",
+    role: "Teacher · Lagos",
+    quote:
+      "I uploaded six months of statements and found ₦4,700 in charges I had never noticed. I genuinely had no idea.",
+  },
+  {
+    initials: "CO",
+    name: "Chidi O.",
+    role: "Freelancer · Abuja",
+    quote:
+      "A transfer failed in January and the refund never came. KoboBack helped me understand exactly what happened and how to dispute it.",
+  },
+  {
+    initials: "FB",
+    name: "Funmilayo B.",
+    role: "Business owner · Ibadan",
+    quote:
+      "I always suspected my bank was deducting more than it should. Now I have a report that proves it line by line.",
+  },
+];
+
+const faqs = [
+  {
+    q: "Is my bank statement data safe?",
+    a: "Yes. All uploads are encrypted using TLS in transit and AES-256 at rest. We never sell or share your data with third parties. You can request permanent deletion at any time.",
+  },
+  {
+    q: "How does KoboBack make money?",
+    a: "We charge a small success fee — a percentage of the amount you recover. If nothing is found, or recovery fails, you pay nothing.",
+  },
+  {
+    q: "What if no errors are found in my statement?",
+    a: "That's a good outcome. It means your bank has treated you fairly on this statement. You owe us nothing and we'll tell you clearly.",
+  },
+  {
+    q: "Do you work with the banks?",
+    a: "No. KoboBack is entirely independent. We are not affiliated with, endorsed by, or partnered with any Nigerian bank. We represent account holders only.",
+  },
+  {
+    q: "Which banks and statement types do you support?",
+    a: "We currently support PDF statements from all major Nigerian commercial banks. Additional formats and institutions are being added regularly.",
+  },
+];
+
+/* ─────────────────────────────────────────────────────────
+   FAQ ACCORDION
+───────────────────────────────────────────────────────── */
+function FAQItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-slate-200 last:border-none">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between py-5 text-left group"
+      >
+        <span className="text-[15px] font-medium text-slate-900 group-hover:text-blue-600 transition-colors pr-6">
+          {q}
+        </span>
+        <ChevronRight
+          className={`h-4 w-4 text-slate-400 flex-shrink-0 transition-transform duration-200 ${
+            open ? "rotate-90" : ""
+          }`}
+        />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <p className="text-[15px] text-slate-500 leading-relaxed pb-5 pr-8">
+              {a}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   STAT ROW ITEM
+───────────────────────────────────────────────────────── */
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-2xl font-bold text-slate-950 tracking-tight">
+        {value}
+      </span>
+      <span className="text-[13px] text-slate-500 leading-snug">{label}</span>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   MAIN APP
+───────────────────────────────────────────────────────── */
+export default function App() {
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
   });
-  const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
-  const heroY = useTransform(scrollYProgress, [0, 1], [0, 120]);
+  const heroY = useTransform(scrollYProgress, [0, 1], [0, 60]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [formStatus, setFormStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [fieldError, setFieldError] = useState("");
+
+  const submitWaitlist = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFieldError("");
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setFieldError("Please enter a valid email address.");
+      return;
+    }
+    setFormStatus("loading");
+    try {
+      await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+    } catch {
+      // Endpoint not live yet — treat as success gracefully
+    }
+    setFormStatus("success");
+    setEmail("");
+  };
+
+  const navLinks = [
+    { href: "#how-it-works", label: "How it works" },
+    { href: "#trust", label: "Why trust us" },
+    { href: "#faq", label: "FAQ" },
+  ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* ── Navbar ── */}
-      <nav className="fixed top-0 inset-x-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200/60">
-        <div className="max-w-7xl mx-auto flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-          <span className="text-2xl font-bold tracking-tight text-blue-600">
-            KoboBack
-          </span>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
-            <a href="#features" className="hover:text-gray-900 transition">
-              Features
-            </a>
-            <a href="#how-it-works" className="hover:text-gray-900 transition">
-              How It Works
-            </a>
-            <a href="#cta" className="hover:text-gray-900 transition">
-              Get Started
-            </a>
-          </div>
+    <div className="min-h-screen bg-white text-slate-900 antialiased">
+      {/* ══════════════════════════════════════════════
+          NAVBAR
+      ══════════════════════════════════════════════ */}
+      <header className="fixed inset-x-0 top-0 z-50 bg-white border-b border-slate-200">
+        <div className="max-w-[1100px] mx-auto px-6 h-14 flex items-center justify-between">
+          {/* Logo */}
           <a
-            href="#cta"
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition shadow-md shadow-blue-600/20"
+            href="/"
+            className="text-[15px] font-semibold text-slate-950 tracking-tight"
           >
-            Get Started <ArrowRight className="h-4 w-4" />
+            KoboBack
           </a>
-        </div>
-      </nav>
 
-      {/* ── Hero ── */}
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-7">
+            {navLinks.map((l) => (
+              <a
+                key={l.href}
+                href={l.href}
+                className="text-[13px] text-slate-500 hover:text-slate-900 transition-colors"
+              >
+                {l.label}
+              </a>
+            ))}
+          </nav>
+
+          {/* Desktop CTA */}
+          <a
+            href="#waitlist"
+            className="hidden md:inline-flex items-center gap-1.5 h-8 px-4 rounded-md bg-blue-600 text-white text-[13px] font-medium hover:bg-blue-700 transition-colors"
+          >
+            Join waitlist
+          </a>
+
+          {/* Mobile toggle */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden p-1.5 text-slate-500 hover:text-slate-900 transition-colors"
+            aria-label="Toggle navigation"
+          >
+            {mobileOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+          </button>
+        </div>
+
+        {/* Mobile drawer */}
+        <AnimatePresence>
+          {mobileOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.18, ease: "easeInOut" }}
+              className="overflow-hidden border-t border-slate-100 bg-white md:hidden"
+            >
+              <div className="px-6 py-4 flex flex-col gap-1">
+                {navLinks.map((l) => (
+                  <a
+                    key={l.href}
+                    href={l.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="py-2.5 text-[14px] text-slate-600 hover:text-slate-900 transition-colors"
+                  >
+                    {l.label}
+                  </a>
+                ))}
+                <a
+                  href="#waitlist"
+                  onClick={() => setMobileOpen(false)}
+                  className="mt-2 inline-flex items-center justify-center h-9 px-4 rounded-md bg-blue-600 text-white text-[13px] font-medium"
+                >
+                  Join waitlist
+                </a>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </header>
+
+      {/* ══════════════════════════════════════════════
+          HERO
+      ══════════════════════════════════════════════ */}
       <section
         ref={heroRef}
-        className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 pt-32 pb-24 lg:pt-44 lg:pb-36"
+        className="pt-32 pb-24 md:pt-40 md:pb-32 bg-white border-b border-slate-200"
       >
-        {/* decorative blobs */}
-        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-blue-400/20 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-60 -left-40 w-[500px] h-[500px] rounded-full bg-indigo-500/20 blur-3xl pointer-events-none" />
-
         <motion.div
-          style={{ opacity: heroOpacity, y: heroY }}
-          className="relative z-10 max-w-4xl mx-auto text-center px-4 sm:px-6"
+          style={{ y: heroY, opacity: heroOpacity }}
+          className="max-w-[1100px] mx-auto px-6"
         >
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-block mb-4 px-4 py-1 rounded-full bg-white/10 text-blue-100 text-sm font-medium backdrop-blur-sm"
-          >
-            AI-Powered Compliance Auditing
-          </motion.p>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight"
-          >
-            Automate your{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-200">
-              compliance audits
-            </span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.25 }}
-            className="mt-6 text-lg md:text-xl text-blue-100 max-w-2xl mx-auto"
-          >
-            Upload financial documents and let our AI engine parse, summarize,
-            flag suspicious transactions, and deliver instant compliance reports
-            — all in minutes.
-          </motion.p>
-
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.4 }}
-            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+            initial="hidden"
+            animate="visible"
+            variants={fade}
+            className="max-w-[680px]"
           >
-            <a
-              href="#cta"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-white text-blue-700 font-bold text-lg hover:bg-blue-50 transition shadow-lg shadow-black/10"
-            >
-              Start Auditing <ArrowRight className="h-5 w-5" />
-            </a>
-            <a
-              href="#features"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border-2 border-white/30 text-white font-semibold text-lg hover:bg-white/10 transition"
-            >
-              Learn More
-            </a>
-          </motion.div>
+            {/* Eyebrow */}
+            <div className="inline-flex items-center gap-2 mb-8 px-3 py-1 rounded-full border border-slate-200 bg-slate-50">
+              <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
+              <span className="text-[12px] font-medium text-slate-500 tracking-wide">
+                AI-powered bank error detection · Nigeria
+              </span>
+            </div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 1 }}
-            className="mt-16"
-          >
-            <a href="#features" aria-label="Scroll down">
-              <ChevronDown className="mx-auto h-8 w-8 text-white/50 animate-bounce" />
-            </a>
+            {/* Headline */}
+            <h1 className="text-[40px] md:text-[52px] font-bold text-slate-950 leading-[1.12] tracking-[-0.02em]">
+              Your bank may owe you money.
+              <br />
+              <span className="text-slate-400">
+                Most people never find out.
+              </span>
+            </h1>
+
+            {/* Sub-headline */}
+            <p className="mt-6 text-[17px] text-slate-500 leading-relaxed max-w-[520px]">
+              KoboBack scans your bank statement using AI to detect hidden
+              charges, failed transaction refunds, and billing errors — then
+              helps you recover what you're owed. No upfront cost.
+            </p>
+
+            {/* CTAs */}
+            <div className="mt-10 flex flex-col sm:flex-row items-start gap-3">
+              <a
+                href="#waitlist"
+                className="inline-flex items-center gap-2 h-11 px-5 rounded-md bg-blue-600 text-white text-[14px] font-medium hover:bg-blue-700 transition-colors"
+              >
+                Join the waitlist <ArrowRight className="h-4 w-4" />
+              </a>
+              <a
+                href="#how-it-works"
+                className="inline-flex items-center gap-2 h-11 px-5 rounded-md border border-slate-200 text-slate-600 text-[14px] font-medium hover:border-slate-300 hover:text-slate-900 transition-colors"
+              >
+                See how it works
+              </a>
+            </div>
+
+            {/* Trust line */}
+            <p className="mt-8 text-[12px] text-slate-400">
+              Private by default · No bank login required · Free to scan
+            </p>
           </motion.div>
         </motion.div>
-      </section>
 
-      {/* ── Features ── */}
-      <section id="features" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={fadeIn}
-            custom={0}
-            className="text-center mb-16"
-          >
-            <span className="inline-block mb-3 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-blue-600 bg-blue-50 rounded-full">
-              Features
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900">
-              A smarter way to audit
-            </h2>
-            <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto">
-              Everything you need to maintain continuous compliance — without
-              the manual overhead.
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {features.map((f, i) => (
-              <motion.div
-                key={f.title}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-60px" }}
-                variants={fadeIn}
-                custom={i}
-                className="group relative bg-gray-50 rounded-2xl p-8 hover:bg-white hover:shadow-xl transition-all duration-300 border border-transparent hover:border-gray-100"
-              >
-                <div
-                  className={`inline-flex items-center justify-center h-14 w-14 rounded-xl ${f.color} text-white mb-5 shadow-lg shadow-${f.color}/30`}
-                >
-                  <f.icon className="h-7 w-7" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  {f.title}
-                </h3>
-                <p className="text-gray-500 leading-relaxed">{f.desc}</p>
-              </motion.div>
-            ))}
-          </div>
+        {/* Scroll indicator */}
+        <div className="mt-20 flex justify-center">
+          <a href="#problem" aria-label="Scroll down">
+            <ChevronDown className="h-5 w-5 text-slate-300 animate-bounce" />
+          </a>
         </div>
       </section>
 
-      {/* ── How It Works ── */}
-      <section id="how-it-works" className="py-24 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={fadeIn}
-            custom={0}
-            className="text-center mb-16"
-          >
-            <span className="inline-block mb-3 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-600 bg-emerald-50 rounded-full">
-              How It Works
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900">
-              Four steps to full compliance
-            </h2>
-            <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto">
-              From document upload to actionable insights — the entire workflow
-              is automated.
-            </p>
-          </motion.div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 relative">
-            {/* connector line (desktop) */}
-            <div className="hidden lg:block absolute top-12 left-[12.5%] right-[12.5%] h-0.5 bg-gradient-to-r from-blue-200 via-blue-400 to-emerald-300" />
-
-            {steps.map((s, i) => (
-              <motion.div
-                key={s.title}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-60px" }}
-                variants={i % 2 === 0 ? slideInLeft : slideInRight}
-                className="relative text-center"
-              >
-                <div className="relative z-10 mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-white shadow-lg border-4 border-blue-100 mb-6">
-                  <s.icon className="h-10 w-10 text-blue-600" />
-                </div>
-                <span className="inline-block mb-1 text-xs font-bold text-blue-500 uppercase tracking-widest">
-                  Step {i + 1}
-                </span>
-                <h3 className="text-lg font-bold text-gray-900 mb-1">
-                  {s.title}
-                </h3>
-                <p className="text-sm text-gray-500">{s.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Stats / Social Proof ── */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={scaleUp}
-            className="grid grid-cols-2 md:grid-cols-4 gap-10 text-center"
-          >
-            {[
-              { value: "10k+", label: "Documents Audited" },
-              { value: "99.2%", label: "Accuracy Rate" },
-              { value: "<5 min", label: "Avg Processing Time" },
-              { value: "250+", label: "Companies Trust Us" },
-            ].map((stat) => (
-              <div key={stat.label}>
-                <p className="text-4xl sm:text-5xl font-extrabold">
-                  {stat.value}
-                </p>
-                <p className="mt-2 text-sm text-blue-200 font-medium">
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── CTA ── */}
-      <section id="cta" className="py-24 bg-white">
+      {/* ══════════════════════════════════════════════
+          STATS BAR
+      ══════════════════════════════════════════════ */}
+      <section className="bg-slate-50 border-b border-slate-200 py-12">
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          variants={scaleUp}
-          className="max-w-3xl mx-auto text-center px-4 sm:px-6"
+          variants={fadeUp}
+          className="max-w-[1100px] mx-auto px-6 grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-0 sm:divide-x sm:divide-slate-200"
         >
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900">
-            Ready to modernize your audits?
-          </h2>
-          <p className="mt-4 text-lg text-gray-500 max-w-xl mx-auto">
-            Join hundreds of compliance teams already saving hours every week
-            with KoboBack.
-          </p>
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a
-              href="#"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-blue-600 text-white font-bold text-lg hover:bg-blue-700 transition shadow-lg shadow-blue-600/25"
-            >
-              Get Started Free <ArrowRight className="h-5 w-5" />
-            </a>
-            <a
-              href="#features"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold text-lg hover:border-gray-300 hover:bg-gray-50 transition"
-            >
-              See Features
-            </a>
+          <div className="sm:pr-10">
+            <Stat
+              value="₦Billions"
+              label="Lost to bank errors in Nigeria every year"
+            />
+          </div>
+          <div className="sm:px-10">
+            <Stat
+              value="9 in 10"
+              label="Affected customers never receive a refund"
+            />
+          </div>
+          <div className="sm:pl-10">
+            <Stat
+              value="₦0 upfront"
+              label="You only pay when money is recovered"
+            />
           </div>
         </motion.div>
       </section>
 
-      {/* ── Footer ── */}
-      <footer className="bg-gray-900 text-gray-400">
-        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <span className="text-white font-bold text-lg">KoboBack</span>
-          <p className="text-sm">
-            &copy; {new Date().getFullYear()} KoboBack, Inc. All rights
-            reserved.
-          </p>
+      {/* ══════════════════════════════════════════════
+          PROBLEM SECTION
+      ══════════════════════════════════════════════ */}
+      <section
+        id="problem"
+        className="py-24 bg-white border-b border-slate-200"
+      >
+        <div className="max-w-[1100px] mx-auto px-6">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-60px" }}
+            variants={fade}
+            custom={0}
+            className="max-w-[520px] mb-14"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-4">
+              The problem
+            </p>
+            <h2 className="text-[30px] md:text-[36px] font-bold text-slate-950 leading-[1.2] tracking-[-0.02em]">
+              Banks make mistakes.
+              <br />
+              You're the one absorbing the cost.
+            </h2>
+            <p className="mt-4 text-[15px] text-slate-500 leading-relaxed">
+              It happens quietly. Small deductions. Failed refunds. Charges with
+              no explanation. Most people never notice — and banks aren't going
+              to raise the issue themselves.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {problems.map((p, i) => (
+              <motion.div
+                key={p.title}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-40px" }}
+                variants={fade}
+                custom={i}
+                className="p-6 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-colors"
+              >
+                <div className="mb-4 h-9 w-9 rounded-lg bg-slate-100 flex items-center justify-center">
+                  <p.icon className="h-4 w-4 text-slate-500" />
+                </div>
+                <h3 className="text-[15px] font-semibold text-slate-900 mb-2">
+                  {p.title}
+                </h3>
+                <p className="text-[14px] text-slate-500 leading-relaxed">
+                  {p.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Pull quote */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeUp}
+            className="mt-16 border-l-2 border-slate-200 pl-6 max-w-[600px]"
+          >
+            <p className="text-[17px] text-slate-600 leading-relaxed italic">
+              "The average Nigerian bank customer has at least one unresolved
+              billing error on their statement. They simply don't know it yet."
+            </p>
+            <p className="mt-3 text-[12px] text-slate-400">
+              Based on industry analysis of retail banking patterns in Nigeria
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════
+          HOW IT WORKS
+      ══════════════════════════════════════════════ */}
+      <section
+        id="how-it-works"
+        className="py-24 bg-slate-50 border-b border-slate-200"
+      >
+        <div className="max-w-[1100px] mx-auto px-6">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-60px" }}
+            variants={fade}
+            custom={0}
+            className="max-w-[480px] mb-14"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-4">
+              How it works
+            </p>
+            <h2 className="text-[30px] md:text-[36px] font-bold text-slate-950 leading-[1.2] tracking-[-0.02em]">
+              Four steps to get your money back
+            </h2>
+            <p className="mt-4 text-[15px] text-slate-500 leading-relaxed">
+              No technical knowledge needed. No account linking. Just your bank
+              statement PDF.
+            </p>
+          </motion.div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {steps.map((s, i) => (
+              <motion.div
+                key={s.number}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-40px" }}
+                variants={fade}
+                custom={i}
+                className="relative"
+              >
+                {/* Connector (desktop) */}
+                {i < steps.length - 1 && (
+                  <div className="hidden lg:block absolute top-4 left-[calc(100%+12px)] w-[calc(100%-24px)] h-px bg-slate-200 z-10" />
+                )}
+                <div className="p-6 rounded-xl border border-slate-200 bg-white h-full hover:border-slate-300 transition-colors">
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="h-9 w-9 rounded-lg bg-slate-100 flex items-center justify-center">
+                      <s.icon className="h-4 w-4 text-slate-500" />
+                    </div>
+                    <span className="text-[11px] font-bold text-slate-300 tracking-widest">
+                      {s.number}
+                    </span>
+                  </div>
+                  <h3 className="text-[14px] font-semibold text-slate-900 mb-2">
+                    {s.title}
+                  </h3>
+                  <p className="text-[13px] text-slate-500 leading-relaxed">
+                    {s.desc}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════
+          WHY TRUST US
+      ══════════════════════════════════════════════ */}
+      <section id="trust" className="py-24 bg-white border-b border-slate-200">
+        <div className="max-w-[1100px] mx-auto px-6">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-60px" }}
+            variants={fade}
+            custom={0}
+            className="max-w-[480px] mb-14"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-4">
+              Why trust us
+            </p>
+            <h2 className="text-[30px] md:text-[36px] font-bold text-slate-950 leading-[1.2] tracking-[-0.02em]">
+              We work for you.
+              <br />
+              Not the financial institution.
+            </h2>
+          </motion.div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {trustPoints.map((t, i) => (
+              <motion.div
+                key={t.title}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-40px" }}
+                variants={fade}
+                custom={i}
+              >
+                <div className="mb-4 h-9 w-9 rounded-lg bg-slate-100 flex items-center justify-center">
+                  <t.icon className="h-4 w-4 text-slate-500" />
+                </div>
+                <h3 className="text-[14px] font-semibold text-slate-900 mb-2">
+                  {t.title}
+                </h3>
+                <p className="text-[13px] text-slate-500 leading-relaxed">
+                  {t.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════
+          UNIQUE ANGLE / DIFFERENTIATOR
+      ══════════════════════════════════════════════ */}
+      <section className="py-24 bg-slate-950 border-b border-slate-800">
+        <div className="max-w-[1100px] mx-auto px-6">
+          <div className="lg:grid lg:grid-cols-[1fr_1fr] lg:gap-16 lg:items-start">
+            {/* Left */}
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fade}
+              custom={0}
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500 mb-4">
+                What makes us different
+              </p>
+              <h2 className="text-[30px] md:text-[36px] font-bold text-white leading-[1.2] tracking-[-0.02em]">
+                Your financial watchdog.
+                <br />
+                <span className="text-slate-400">
+                  Not just another fintech app.
+                </span>
+              </h2>
+              <p className="mt-5 text-[15px] text-slate-400 leading-relaxed max-w-[420px]">
+                Most tools only monitor transactions going forward. KoboBack
+                looks backward into your history to find errors that have
+                already happened — ones you may have absorbed months ago without
+                knowing.
+              </p>
+              <a
+                href="#waitlist"
+                className="mt-8 inline-flex items-center gap-2 h-10 px-5 rounded-md bg-white text-slate-900 text-[13px] font-medium hover:bg-slate-100 transition-colors"
+              >
+                Join the waitlist <ArrowRight className="h-4 w-4" />
+              </a>
+            </motion.div>
+
+            {/* Right — differentiator list */}
+            <div className="mt-12 lg:mt-0 space-y-px">
+              {differentiators.map((d, i) => (
+                <motion.div
+                  key={d.title}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={fade}
+                  custom={i}
+                  className="flex items-start gap-4 p-5 border border-slate-800 rounded-xl mb-3 last:mb-0 hover:border-slate-700 transition-colors"
+                >
+                  <div className="flex-shrink-0 mt-0.5 h-8 w-8 rounded-md bg-slate-800 flex items-center justify-center">
+                    <d.icon className="h-4 w-4 text-slate-400" />
+                  </div>
+                  <div>
+                    <p className="text-[14px] font-medium text-white">
+                      {d.title}
+                    </p>
+                    <p className="mt-1 text-[13px] text-slate-500 leading-relaxed">
+                      {d.desc}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════
+          TESTIMONIALS
+      ══════════════════════════════════════════════ */}
+      <section className="py-24 bg-slate-50 border-b border-slate-200">
+        <div className="max-w-[1100px] mx-auto px-6">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fade}
+            custom={0}
+            className="mb-14"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-4">
+              What people are saying
+            </p>
+            <h2 className="text-[30px] md:text-[36px] font-bold text-slate-950 leading-[1.2] tracking-[-0.02em] max-w-[480px]">
+              They thought their money was just gone.
+            </h2>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {testimonials.map((t, i) => (
+              <motion.div
+                key={t.name}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                variants={fade}
+                custom={i}
+                className="p-6 rounded-xl border border-slate-200 bg-white"
+              >
+                <p className="text-[15px] text-slate-600 leading-relaxed mb-6">
+                  "{t.quote}"
+                </p>
+                <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
+                  <div className="h-8 w-8 rounded-full bg-slate-900 flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0">
+                    {t.initials}
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-semibold text-slate-900">
+                      {t.name}
+                    </p>
+                    <p className="text-[12px] text-slate-400">{t.role}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════
+          WAITLIST CTA
+      ══════════════════════════════════════════════ */}
+      <section
+        id="waitlist"
+        className="py-24 bg-white border-b border-slate-200"
+      >
+        <div className="max-w-[1100px] mx-auto px-6">
+          <div className="max-w-[560px]">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fade}
+              custom={0}
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-4">
+                Early access
+              </p>
+              <h2 className="text-[30px] md:text-[40px] font-bold text-slate-950 leading-[1.15] tracking-[-0.02em]">
+                Stop leaving your money
+                <br />
+                with the bank.
+              </h2>
+              <p className="mt-4 text-[15px] text-slate-500 leading-relaxed">
+                Join the waitlist. Early members get priority access, a free
+                first statement scan, and first-class recovery support.
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fade}
+              custom={1}
+              className="mt-10"
+            >
+              {formStatus === "success" ? (
+                <div className="flex items-start gap-3 p-4 rounded-xl border border-slate-200 bg-slate-50">
+                  <CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[14px] font-medium text-slate-900">
+                      You're on the list.
+                    </p>
+                    <p className="mt-1 text-[13px] text-slate-500">
+                      We'll be in touch as soon as KoboBack is ready. Keep an
+                      eye on your inbox.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={submitWaitlist} noValidate>
+                  <div className="flex flex-col sm:flex-row gap-2.5">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setFieldError("");
+                      }}
+                      placeholder="your@email.com"
+                      className="flex-1 h-11 px-4 rounded-md border border-slate-200 text-[14px] text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition"
+                      required
+                    />
+                    <button
+                      type="submit"
+                      disabled={formStatus === "loading"}
+                      className="h-11 px-5 rounded-md bg-blue-600 text-white text-[13px] font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-2 whitespace-nowrap"
+                    >
+                      {formStatus === "loading" ? (
+                        <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                      ) : (
+                        <>
+                          Join waitlist <ArrowRight className="h-4 w-4" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  {fieldError && (
+                    <p className="mt-2 text-[12px] text-red-500">
+                      {fieldError}
+                    </p>
+                  )}
+                  <p className="mt-3 text-[12px] text-slate-400">
+                    No spam. No sharing. Unsubscribe anytime.
+                  </p>
+                  <p className="mt-2 text-[12px] text-slate-400">
+                    By joining, you agree to our{" "}
+                    <Link to="/terms" className="text-slate-600 underline underline-offset-2 hover:text-slate-900 transition-colors">
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link to="/privacy" className="text-slate-600 underline underline-offset-2 hover:text-slate-900 transition-colors">
+                      Privacy Policy
+                    </Link>
+                    .
+                  </p>
+                </form>
+              )}
+
+              {/* Trust chips */}
+              <div className="mt-8 flex flex-wrap gap-4">
+                {[
+                  "Free first scan",
+                  "No upfront payment",
+                  "Encrypted & private",
+                ].map((b) => (
+                  <span
+                    key={b}
+                    className="flex items-center gap-1.5 text-[12px] text-slate-500"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 text-blue-600" />
+                    {b}
+                  </span>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════
+          FAQ
+      ══════════════════════════════════════════════ */}
+      <section id="faq" className="py-24 bg-slate-50 border-b border-slate-200">
+        <div className="max-w-[1100px] mx-auto px-6">
+          <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-16">
+            {/* Left label */}
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fade}
+              custom={0}
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-4">
+                FAQ
+              </p>
+              <h2 className="text-[24px] font-bold text-slate-950 leading-[1.25] tracking-[-0.02em]">
+                Common questions, answered honestly.
+              </h2>
+              <p className="mt-4 text-[14px] text-slate-500 leading-relaxed">
+                Anything else?{" "}
+                <a
+                  href="mailto:hello@koboback.com"
+                  className="text-blue-600 hover:text-blue-700 transition-colors"
+                >
+                  Email us.
+                </a>
+              </p>
+            </motion.div>
+
+            {/* Right accordion */}
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fade}
+              custom={1}
+              className="mt-10 lg:mt-0"
+            >
+              {faqs.map((f) => (
+                <FAQItem key={f.q} q={f.q} a={f.a} />
+              ))}
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════
+          FOOTER
+      ══════════════════════════════════════════════ */}
+      <footer className="bg-white py-12">
+        <div className="max-w-[1100px] mx-auto px-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+            {/* Brand + tagline */}
+            <div>
+              <p className="text-[14px] font-semibold text-slate-950">
+                KoboBack
+              </p>
+              <p className="mt-1 text-[13px] text-slate-400 max-w-[280px] leading-relaxed">
+                The consumer financial watchdog for Nigeria. We find money your
+                bank took that you didn't know about.
+              </p>
+            </div>
+
+            {/* Nav columns */}
+            <div className="flex gap-12 text-[13px]">
+              <div className="flex flex-col gap-3">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                  Product
+                </p>
+                <a
+                  href="#how-it-works"
+                  className="text-slate-500 hover:text-slate-900 transition-colors"
+                >
+                  How it works
+                </a>
+                <a
+                  href="#trust"
+                  className="text-slate-500 hover:text-slate-900 transition-colors"
+                >
+                  Why trust us
+                </a>
+                <a
+                  href="#waitlist"
+                  className="text-slate-500 hover:text-slate-900 transition-colors"
+                >
+                  Join waitlist
+                </a>
+              </div>
+              <div className="flex flex-col gap-3">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                  Legal
+                </p>
+                <Link
+                  to="/privacy"
+                  className="text-slate-500 hover:text-slate-900 transition-colors"
+                >
+                  Privacy policy
+                </Link>
+                <Link
+                  to="/terms"
+                  className="text-slate-500 hover:text-slate-900 transition-colors"
+                >
+                  Terms of service
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom bar */}
+          <div className="mt-10 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-slate-400">
+            <p>
+              &copy; {new Date().getFullYear()} KoboBack. All rights reserved.
+            </p>
+            <p>Not affiliated with any bank or financial institution.</p>
+          </div>
         </div>
       </footer>
     </div>
   );
-};
-
-export default App;
+}

@@ -5,6 +5,7 @@ node_modules/
 dist/
 build/
 
+.env
 # Ignore logslogs/
 *.log
 # Ignore environment variables.env

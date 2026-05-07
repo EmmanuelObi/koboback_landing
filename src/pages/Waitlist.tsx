@@ -3,10 +3,9 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
 
-const AIRTABLE_BASE = "REDACTED_BASE";
-const AIRTABLE_TABLE = "REDACTED_TABLE";
-const AIRTABLE_TOKEN =
-  "REDACTED_TOKEN";
+const AIRTABLE_BASE = import.meta.env.VITE_AIRTABLE_BASE as string;
+const AIRTABLE_TABLE = import.meta.env.VITE_AIRTABLE_TABLE as string;
+const AIRTABLE_TOKEN = import.meta.env.VITE_AIRTABLE_TOKEN as string;
 
 const NIGERIAN_BANKS = [
   "Access Bank",

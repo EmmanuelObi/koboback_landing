@@ -257,32 +257,6 @@ export default function App() {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [email, setEmail] = useState("");
-  const [formStatus, setFormStatus] = useState<
-    "idle" | "loading" | "success" | "error"
-  >("idle");
-  const [fieldError, setFieldError] = useState("");
-
-  const submitWaitlist = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFieldError("");
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setFieldError("Please enter a valid email address.");
-      return;
-    }
-    setFormStatus("loading");
-    try {
-      await fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-    } catch {
-      // Endpoint not live yet — treat as success gracefully
-    }
-    setFormStatus("success");
-    setEmail("");
-  };
 
   const navLinks = [
     { href: "#how-it-works", label: "How it works" },
@@ -319,12 +293,12 @@ export default function App() {
           </nav>
 
           {/* Desktop CTA */}
-          <a
-            href="#waitlist"
+          <Link
+            to="/waitlist"
             className="hidden md:inline-flex items-center gap-1.5 h-8 px-4 rounded-md bg-blue-600 text-white text-[13px] font-medium hover:bg-blue-700 transition-colors"
           >
             Join waitlist
-          </a>
+          </Link>
 
           {/* Mobile toggle */}
           <button
@@ -361,13 +335,13 @@ export default function App() {
                     {l.label}
                   </a>
                 ))}
-                <a
-                  href="#waitlist"
+                <Link
+                  to="/waitlist"
                   onClick={() => setMobileOpen(false)}
                   className="mt-2 inline-flex items-center justify-center h-9 px-4 rounded-md bg-blue-600 text-white text-[13px] font-medium"
                 >
                   Join waitlist
-                </a>
+                </Link>
               </div>
             </motion.div>
           )}
@@ -417,12 +391,12 @@ export default function App() {
 
             {/* CTAs */}
             <div className="mt-10 flex flex-col sm:flex-row items-start gap-3">
-              <a
-                href="#waitlist"
+              <Link
+                to="/waitlist"
                 className="inline-flex items-center gap-2 h-11 px-5 rounded-md bg-blue-600 text-white text-[14px] font-medium hover:bg-blue-700 transition-colors"
               >
                 Join the waitlist <ArrowRight className="h-4 w-4" />
-              </a>
+              </Link>
               <a
                 href="#how-it-works"
                 className="inline-flex items-center gap-2 h-11 px-5 rounded-md border border-slate-200 text-slate-600 text-[14px] font-medium hover:border-slate-300 hover:text-slate-900 transition-colors"
@@ -695,12 +669,12 @@ export default function App() {
                 already happened, ones you may have absorbed months ago without
                 knowing.
               </p>
-              <a
-                href="#waitlist"
+              <Link
+                to="/waitlist"
                 className="mt-8 inline-flex items-center gap-2 h-10 px-5 rounded-md bg-white text-slate-900 text-[13px] font-medium hover:bg-slate-100 transition-colors"
               >
                 Join the waitlist <ArrowRight className="h-4 w-4" />
-              </a>
+              </Link>
             </motion.div>
 
             {/* Right — differentiator list */}
@@ -788,128 +762,52 @@ export default function App() {
       {/* ══════════════════════════════════════════════
           WAITLIST CTA
       ══════════════════════════════════════════════ */}
-      <section
-        id="waitlist"
-        className="py-24 bg-white border-b border-slate-200"
-      >
+      <section className="py-24 bg-white border-b border-slate-200">
         <div className="max-w-[1100px] mx-auto px-6">
-          <div className="max-w-[560px]">
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fade}
-              custom={0}
-            >
-              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-4">
-                Early access
-              </p>
-              <h2 className="text-[30px] md:text-[40px] font-bold text-slate-950 leading-[1.15] tracking-[-0.02em]">
-                Stop leaving your money
-                <br />
-                with the bank.
-              </h2>
-              <p className="mt-4 text-[15px] text-slate-500 leading-relaxed">
-                Join the waitlist. Early members get priority access, a free
-                first statement scan, and first-class recovery support.
-              </p>
-            </motion.div>
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fade}
+            custom={0}
+            className="max-w-[560px]"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-4">
+              Early access
+            </p>
+            <h2 className="text-[30px] md:text-[40px] font-bold text-slate-950 leading-[1.15] tracking-[-0.02em]">
+              Stop leaving your money
+              <br />
+              with the bank.
+            </h2>
+            <p className="mt-4 text-[15px] text-slate-500 leading-relaxed">
+              Join the waitlist. Early members get priority access, a free first
+              statement scan, and first-class recovery support.
+            </p>
 
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fade}
-              custom={1}
-              className="mt-10"
+            <Link
+              to="/waitlist"
+              className="mt-8 inline-flex items-center gap-2 h-11 px-5 rounded-md bg-blue-600 text-white text-[14px] font-medium hover:bg-blue-700 transition-colors"
             >
-              {formStatus === "success" ? (
-                <div className="flex items-start gap-3 p-4 rounded-xl border border-slate-200 bg-slate-50">
-                  <CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-[14px] font-medium text-slate-900">
-                      You're on the list.
-                    </p>
-                    <p className="mt-1 text-[13px] text-slate-500">
-                      We'll be in touch as soon as KoboBack is ready. Keep an
-                      eye on your inbox.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <form onSubmit={submitWaitlist} noValidate>
-                  <div className="flex flex-col sm:flex-row gap-2.5">
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        setFieldError("");
-                      }}
-                      placeholder="your@email.com"
-                      className="flex-1 h-11 px-4 rounded-md border border-slate-200 text-[14px] text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition"
-                      required
-                    />
-                    <button
-                      type="submit"
-                      disabled={formStatus === "loading"}
-                      className="h-11 px-5 rounded-md bg-blue-600 text-white text-[13px] font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-2 whitespace-nowrap"
-                    >
-                      {formStatus === "loading" ? (
-                        <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                      ) : (
-                        <>
-                          Join waitlist <ArrowRight className="h-4 w-4" />
-                        </>
-                      )}
-                    </button>
-                  </div>
-                  {fieldError && (
-                    <p className="mt-2 text-[12px] text-red-500">
-                      {fieldError}
-                    </p>
-                  )}
-                  <p className="mt-3 text-[12px] text-slate-400">
-                    No spam. No sharing. Unsubscribe anytime.
-                  </p>
-                  <p className="mt-2 text-[12px] text-slate-400">
-                    By joining, you agree to our{" "}
-                    <Link
-                      to="/terms"
-                      className="text-slate-600 underline underline-offset-2 hover:text-slate-900 transition-colors"
-                    >
-                      Terms of Service
-                    </Link>{" "}
-                    and{" "}
-                    <Link
-                      to="/privacy"
-                      className="text-slate-600 underline underline-offset-2 hover:text-slate-900 transition-colors"
-                    >
-                      Privacy Policy
-                    </Link>
-                    .
-                  </p>
-                </form>
-              )}
+              Join the waitlist <ArrowRight className="h-4 w-4" />
+            </Link>
 
-              {/* Trust chips */}
-              <div className="mt-8 flex flex-wrap gap-4">
-                {[
-                  "Free first scan",
-                  "No upfront payment",
-                  "Encrypted & private",
-                ].map((b) => (
-                  <span
-                    key={b}
-                    className="flex items-center gap-1.5 text-[12px] text-slate-500"
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5 text-blue-600" />
-                    {b}
-                  </span>
-                ))}
-              </div>
-            </motion.div>
-          </div>
+            <div className="mt-8 flex flex-wrap gap-4">
+              {[
+                "Free first scan",
+                "No upfront payment",
+                "Encrypted & private",
+              ].map((b) => (
+                <span
+                  key={b}
+                  className="flex items-center gap-1.5 text-[12px] text-slate-500"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5 text-blue-600" />
+                  {b}
+                </span>
+              ))}
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -996,12 +894,12 @@ export default function App() {
                 >
                   Why trust us
                 </a>
-                <a
-                  href="#waitlist"
+                <Link
+                  to="/waitlist"
                   className="text-slate-500 hover:text-slate-900 transition-colors"
                 >
                   Join waitlist
-                </a>
+                </Link>
               </div>
               <div className="flex flex-col gap-3">
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">

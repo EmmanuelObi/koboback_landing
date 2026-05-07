@@ -116,8 +116,8 @@ const trustPoints = [
   },
   {
     icon: Banknote,
-    title: "No upfront fees",
-    desc: "We charge a small percentage only when money is successfully recovered. Nothing found, nothing owed.",
+    title: "Transparent pricing",
+    desc: "Scan for free. Pay ₦2,000 for a full audit report. Opt into managed recovery for 20% of what we get back — nothing more.",
   },
   {
     icon: BadgeCheck,
@@ -175,7 +175,7 @@ const faqs = [
   },
   {
     q: "How does KoboBack make money?",
-    a: "We charge a small success fee, a percentage of the amount you recover. If nothing is found, or recovery fails, you pay nothing.",
+    a: "Scanning is free. A full audit report costs ₦2,000 — you get a detailed breakdown of every error and a dispute letter. If you want us to handle the recovery process for you, we charge 20% of the amount successfully recovered. No recovery, no fee on that tier.",
   },
   {
     q: "What if no errors are found in my statement?",
@@ -261,6 +261,7 @@ export default function App() {
   const navLinks = [
     { href: "#how-it-works", label: "How it works" },
     { href: "#trust", label: "Why trust us" },
+    { href: "#pricing", label: "Pricing" },
     { href: "#faq", label: "FAQ" },
   ];
 
@@ -385,8 +386,8 @@ export default function App() {
             {/* Sub-headline */}
             <p className="mt-6 text-[17px] text-slate-500 leading-relaxed max-w-[520px]">
               KoboBack scans your bank statement using AI to detect hidden
-              charges, failed transaction refunds, and billing errors,then helps
-              you recover what you're owed. No upfront cost.
+              charges, failed transaction refunds, and billing errors — then
+              helps you understand and recover what you're owed.
             </p>
 
             {/* CTAs */}
@@ -408,6 +409,7 @@ export default function App() {
             {/* Trust line */}
             <p className="mt-8 text-[12px] text-slate-400">
               Private by default · No bank login required · Free to scan
+              · Paid audit & recovery options available
             </p>
           </motion.div>
         </motion.div>
@@ -445,8 +447,8 @@ export default function App() {
           </div>
           <div className="sm:pl-10">
             <Stat
-              value="₦0 upfront"
-              label="You only pay when money is recovered"
+              value="₦2,000"
+              label="For a full audit — or 20% fee on managed recovery"
             />
           </div>
         </motion.div>
@@ -760,6 +762,170 @@ export default function App() {
       </section>
 
       {/* ══════════════════════════════════════════════
+          PRICING
+      ══════════════════════════════════════════════ */}
+      <section id="pricing" className="py-24 bg-white border-b border-slate-200">
+        <div className="max-w-[1100px] mx-auto px-6">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fade}
+            custom={0}
+            className="max-w-[480px] mb-14"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-4">
+              Pricing
+            </p>
+            <h2 className="text-[30px] md:text-[36px] font-bold text-slate-950 leading-[1.2] tracking-[-0.02em]">
+              Simple, transparent pricing.
+              <br />
+              <span className="text-slate-400">Pay only for what you need.</span>
+            </h2>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Tier 1 — Free scan */}
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fade}
+              custom={0}
+              className="p-7 rounded-xl border border-slate-200 bg-white flex flex-col"
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-5">
+                Free
+              </p>
+              <p className="text-[36px] font-bold text-slate-950 tracking-tight leading-none mb-1">
+                ₦0
+              </p>
+              <p className="text-[13px] text-slate-400 mb-6">Always free</p>
+              <p className="text-[15px] font-semibold text-slate-900 mb-2">
+                Statement scan
+              </p>
+              <p className="text-[13px] text-slate-500 leading-relaxed mb-8">
+                Upload your bank statement and get a high-level summary of
+                potential errors — how many were found and what type they are.
+                No cost, no card required.
+              </p>
+              <ul className="mt-auto space-y-2.5">
+                {[
+                  "AI-powered error detection",
+                  'Summary report (e.g. "3 errors found")',
+                  "No bank login required",
+                ].map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-[13px] text-slate-500">
+                    <CheckCircle2 className="h-4 w-4 text-slate-300 flex-shrink-0 mt-0.5" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to="/waitlist"
+                className="mt-8 inline-flex items-center justify-center h-10 px-4 rounded-md border border-slate-200 text-slate-700 text-[13px] font-medium hover:border-slate-300 hover:text-slate-900 transition-colors"
+              >
+                Get early access
+              </Link>
+            </motion.div>
+
+            {/* Tier 2 — Full audit */}
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fade}
+              custom={1}
+              className="p-7 rounded-xl border-2 border-blue-600 bg-white flex flex-col relative"
+            >
+              <span className="absolute top-5 right-5 text-[11px] font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
+                Most popular
+              </span>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-blue-600 mb-5">
+                Full audit
+              </p>
+              <p className="text-[36px] font-bold text-slate-950 tracking-tight leading-none mb-1">
+                ₦2,000
+              </p>
+              <p className="text-[13px] text-slate-400 mb-6">One-time, per statement</p>
+              <p className="text-[15px] font-semibold text-slate-900 mb-2">
+                Detailed audit report
+              </p>
+              <p className="text-[13px] text-slate-500 leading-relaxed mb-8">
+                A full breakdown of every flagged transaction — exact amounts,
+                dates, error types, and a ready-to-send dispute letter for your
+                bank.
+              </p>
+              <ul className="mt-auto space-y-2.5">
+                {[
+                  "Everything in Free",
+                  "Itemised error breakdown",
+                  "Dispute letter generated",
+                  "Priority support",
+                ].map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-[13px] text-slate-600">
+                    <CheckCircle2 className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to="/waitlist"
+                className="mt-8 inline-flex items-center justify-center h-10 px-4 rounded-md bg-blue-600 text-white text-[13px] font-medium hover:bg-blue-700 transition-colors"
+              >
+                Join the waitlist
+              </Link>
+            </motion.div>
+
+            {/* Tier 3 — Recovery */}
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fade}
+              custom={2}
+              className="p-7 rounded-xl border border-slate-200 bg-white flex flex-col"
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-5">
+                Recovery
+              </p>
+              <p className="text-[36px] font-bold text-slate-950 tracking-tight leading-none mb-1">
+                20%
+              </p>
+              <p className="text-[13px] text-slate-400 mb-6">Of recovered amount only</p>
+              <p className="text-[15px] font-semibold text-slate-900 mb-2">
+                Managed recovery
+              </p>
+              <p className="text-[13px] text-slate-500 leading-relaxed mb-8">
+                We handle the dispute process with your bank end-to-end. You
+                only pay if we successfully recover your money — no recovery,
+                no fee.
+              </p>
+              <ul className="mt-auto space-y-2.5">
+                {[
+                  "Everything in Full audit",
+                  "We file the dispute for you",
+                  "Bank follow-up & escalation",
+                  "Success-only fee",
+                ].map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-[13px] text-slate-500">
+                    <CheckCircle2 className="h-4 w-4 text-slate-300 flex-shrink-0 mt-0.5" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to="/waitlist"
+                className="mt-8 inline-flex items-center justify-center h-10 px-4 rounded-md border border-slate-200 text-slate-700 text-[13px] font-medium hover:border-slate-300 hover:text-slate-900 transition-colors"
+              >
+                Get early access
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════
           WAITLIST CTA
       ══════════════════════════════════════════════ */}
       <section className="py-24 bg-white border-b border-slate-200">
@@ -781,8 +947,8 @@ export default function App() {
               with the bank.
             </h2>
             <p className="mt-4 text-[15px] text-slate-500 leading-relaxed">
-              Join the waitlist. Early members get priority access, a free first
-              statement scan, and first-class recovery support.
+              Join the waitlist. Early members get priority access, a free
+              first statement scan, and preferred rates on audit and recovery.
             </p>
 
             <Link
@@ -794,8 +960,8 @@ export default function App() {
 
             <div className="mt-8 flex flex-wrap gap-4">
               {[
-                "Free first scan",
-                "No upfront payment",
+                "Free scan included",
+                "No card required to start",
                 "Encrypted & private",
               ].map((b) => (
                 <span

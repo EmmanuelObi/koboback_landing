@@ -174,7 +174,7 @@ export default function Terms() {
             To request a refund, contact us at{" "}
             <a
               href="mailto:billing@koboback.com"
-              className="text-blue-600 hover:text-blue-700"
+              className="text-brand hover:text-brand-dark"
             >
               billing@koboback.com
             </a>
@@ -188,7 +188,7 @@ export default function Terms() {
         <P>
           Your use of KoboBack involves sharing sensitive financial data with
           us. We treat this data with the highest degree of care. Our complete{" "}
-          <a href="/privacy" className="text-blue-600 hover:text-blue-700">
+          <a href="/privacy" className="text-brand hover:text-brand-dark">
             Privacy Policy
           </a>{" "}
           forms part of these Terms and governs how we collect, use, store, and
@@ -292,7 +292,7 @@ export default function Terms() {
             You may close your KoboBack account at any time by contacting us at{" "}
             <a
               href="mailto:hello@koboback.com"
-              className="text-blue-600 hover:text-blue-700"
+              className="text-brand hover:text-brand-dark"
             >
               hello@koboback.com
             </a>
@@ -369,7 +369,7 @@ export default function Terms() {
             and informally. Please email{" "}
             <a
               href="mailto:hello@koboback.com"
-              className="text-blue-600 hover:text-blue-700"
+              className="text-brand hover:text-brand-dark"
             >
               hello@koboback.com
             </a>{" "}
@@ -416,7 +416,7 @@ export default function Terms() {
       <Section title="15. Entire Agreement">
         <P>
           These Terms, together with our{" "}
-          <a href="/privacy" className="text-blue-600 hover:text-blue-700">
+          <a href="/privacy" className="text-brand hover:text-brand-dark">
             Privacy Policy
           </a>{" "}
           and any additional terms applicable to specific features or

@@ -361,7 +361,7 @@ export default function PrivacyPolicy() {
           To exercise any of these rights, contact us at{" "}
           <a
             href="mailto:privacy@koboback.com"
-            className="text-blue-600 hover:text-blue-700"
+            className="text-brand hover:text-brand-dark"
           >
             privacy@koboback.com
           </a>

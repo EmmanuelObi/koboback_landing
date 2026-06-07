@@ -1,7 +1,7 @@
 /**
  * KoboBack Landing Page
  * Design system: Stripe / Linear inspired — minimal, restrained, production-grade.
- * Palette: slate-950 (primary) · slate-500 (secondary) · blue-600 (single accent CTA)
+ * Palette: slate-950 (primary) · slate-500 (secondary) · brand #85BB65 / #90EE90 (accent CTA)
  * Backgrounds: white / slate-50 alternating
  * No gradients · No glassmorphism · No mixed accent colors
  */
@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import Logo from "./components/Logo";
 
 /* ─────────────────────────────────────────────────────────
    MOTION VARIANTS — subtle, fast, no bounce
@@ -202,7 +203,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between py-5 text-left group"
       >
-        <span className="text-[15px] font-medium text-slate-900 group-hover:text-blue-600 transition-colors pr-6">
+        <span className="text-[15px] font-medium text-slate-900 group-hover:text-brand transition-colors pr-6">
           {q}
         </span>
         <ChevronRight
@@ -273,12 +274,7 @@ export default function App() {
       <header className="fixed inset-x-0 top-0 z-50 bg-white border-b border-slate-200">
         <div className="max-w-[1100px] mx-auto px-6 h-14 flex items-center justify-between">
           {/* Logo */}
-          <a
-            href="/"
-            className="text-[15px] font-semibold text-slate-950 tracking-tight"
-          >
-            KoboBack
-          </a>
+          <Logo to="/" size="md" />
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-7">
@@ -293,13 +289,21 @@ export default function App() {
             ))}
           </nav>
 
-          {/* Desktop CTA */}
-          <Link
-            to="/waitlist"
-            className="hidden md:inline-flex items-center gap-1.5 h-8 px-4 rounded-md bg-blue-600 text-white text-[13px] font-medium hover:bg-blue-700 transition-colors"
-          >
-            Join waitlist
-          </Link>
+          {/* Desktop CTAs */}
+          <div className="hidden md:flex items-center gap-2">
+            <Link
+              to="/product"
+              className="inline-flex items-center h-8 px-4 rounded-md border border-slate-200 text-slate-700 text-[13px] font-medium hover:border-slate-300 transition-colors"
+            >
+              Start audit
+            </Link>
+            <Link
+              to="/waitlist"
+              className="inline-flex items-center gap-1.5 h-8 px-4 rounded-md bg-brand text-white text-[13px] font-medium hover:bg-brand-dark transition-colors"
+            >
+              Join waitlist
+            </Link>
+          </div>
 
           {/* Mobile toggle */}
           <button
@@ -337,9 +341,16 @@ export default function App() {
                   </a>
                 ))}
                 <Link
+                  to="/product"
+                  onClick={() => setMobileOpen(false)}
+                  className="mt-2 inline-flex items-center justify-center h-9 px-4 rounded-md border border-slate-200 text-slate-700 text-[13px] font-medium"
+                >
+                  Start audit
+                </Link>
+                <Link
                   to="/waitlist"
                   onClick={() => setMobileOpen(false)}
-                  className="mt-2 inline-flex items-center justify-center h-9 px-4 rounded-md bg-blue-600 text-white text-[13px] font-medium"
+                  className="inline-flex items-center justify-center h-9 px-4 rounded-md bg-brand text-white text-[13px] font-medium"
                 >
                   Join waitlist
                 </Link>
@@ -368,7 +379,7 @@ export default function App() {
           >
             {/* Eyebrow */}
             <div className="inline-flex items-center gap-2 mb-8 px-3 py-1 rounded-full border border-slate-200 bg-slate-50">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
+              <span className="h-1.5 w-1.5 rounded-full bg-brand" />
               <span className="text-[12px] font-medium text-slate-500 tracking-wide">
                 AI-powered bank error detection · Nigeria
               </span>
@@ -393,23 +404,23 @@ export default function App() {
             {/* CTAs */}
             <div className="mt-10 flex flex-col sm:flex-row items-start gap-3">
               <Link
-                to="/waitlist"
-                className="inline-flex items-center gap-2 h-11 px-5 rounded-md bg-blue-600 text-white text-[14px] font-medium hover:bg-blue-700 transition-colors"
+                to="/product"
+                className="inline-flex items-center gap-2 h-11 px-5 rounded-md bg-brand text-white text-[14px] font-medium hover:bg-brand-dark transition-colors"
               >
-                Join the waitlist <ArrowRight className="h-4 w-4" />
+                Start your audit <ArrowRight className="h-4 w-4" />
               </Link>
-              <a
-                href="#how-it-works"
+              <Link
+                to="/waitlist"
                 className="inline-flex items-center gap-2 h-11 px-5 rounded-md border border-slate-200 text-slate-600 text-[14px] font-medium hover:border-slate-300 hover:text-slate-900 transition-colors"
               >
-                See how it works
-              </a>
+                Join the waitlist
+              </Link>
             </div>
 
             {/* Trust line */}
             <p className="mt-8 text-[12px] text-slate-400">
-              Private by default · No bank login required · Free to scan
-              · Paid audit & recovery options available
+              Private by default · No bank login required · Free to scan · Paid
+              audit & recovery options available
             </p>
           </motion.div>
         </motion.div>
@@ -764,7 +775,10 @@ export default function App() {
       {/* ══════════════════════════════════════════════
           PRICING
       ══════════════════════════════════════════════ */}
-      <section id="pricing" className="py-24 bg-white border-b border-slate-200">
+      <section
+        id="pricing"
+        className="py-24 bg-white border-b border-slate-200"
+      >
         <div className="max-w-[1100px] mx-auto px-6">
           <motion.div
             initial="hidden"
@@ -780,7 +794,9 @@ export default function App() {
             <h2 className="text-[30px] md:text-[36px] font-bold text-slate-950 leading-[1.2] tracking-[-0.02em]">
               Simple, transparent pricing.
               <br />
-              <span className="text-slate-400">Pay only for what you need.</span>
+              <span className="text-slate-400">
+                Pay only for what you need.
+              </span>
             </h2>
           </motion.div>
 
@@ -815,7 +831,10 @@ export default function App() {
                   'Summary report (e.g. "3 errors found")',
                   "No bank login required",
                 ].map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-[13px] text-slate-500">
+                  <li
+                    key={f}
+                    className="flex items-start gap-2 text-[13px] text-slate-500"
+                  >
                     <CheckCircle2 className="h-4 w-4 text-slate-300 flex-shrink-0 mt-0.5" />
                     {f}
                   </li>
@@ -836,18 +855,20 @@ export default function App() {
               viewport={{ once: true }}
               variants={fade}
               custom={1}
-              className="p-7 rounded-xl border-2 border-blue-600 bg-white flex flex-col relative"
+              className="p-7 rounded-xl border-2 border-brand bg-white flex flex-col relative"
             >
-              <span className="absolute top-5 right-5 text-[11px] font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
+              <span className="absolute top-5 right-5 text-[11px] font-semibold text-brand bg-brand-muted px-2.5 py-1 rounded-full">
                 Most popular
               </span>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-blue-600 mb-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-brand mb-5">
                 Full audit
               </p>
               <p className="text-[36px] font-bold text-slate-950 tracking-tight leading-none mb-1">
                 ₦2,000
               </p>
-              <p className="text-[13px] text-slate-400 mb-6">One-time, per statement</p>
+              <p className="text-[13px] text-slate-400 mb-6">
+                One-time, per statement
+              </p>
               <p className="text-[15px] font-semibold text-slate-900 mb-2">
                 Detailed audit report
               </p>
@@ -863,15 +884,18 @@ export default function App() {
                   "Dispute letter generated",
                   "Priority support",
                 ].map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-[13px] text-slate-600">
-                    <CheckCircle2 className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <li
+                    key={f}
+                    className="flex items-start gap-2 text-[13px] text-slate-600"
+                  >
+                    <CheckCircle2 className="h-4 w-4 text-brand flex-shrink-0 mt-0.5" />
                     {f}
                   </li>
                 ))}
               </ul>
               <Link
                 to="/waitlist"
-                className="mt-8 inline-flex items-center justify-center h-10 px-4 rounded-md bg-blue-600 text-white text-[13px] font-medium hover:bg-blue-700 transition-colors"
+                className="mt-8 inline-flex items-center justify-center h-10 px-4 rounded-md bg-brand text-white text-[13px] font-medium hover:bg-brand-dark transition-colors"
               >
                 Join the waitlist
               </Link>
@@ -892,14 +916,16 @@ export default function App() {
               <p className="text-[36px] font-bold text-slate-950 tracking-tight leading-none mb-1">
                 20%
               </p>
-              <p className="text-[13px] text-slate-400 mb-6">Of recovered amount only</p>
+              <p className="text-[13px] text-slate-400 mb-6">
+                Of recovered amount only
+              </p>
               <p className="text-[15px] font-semibold text-slate-900 mb-2">
                 Managed recovery
               </p>
               <p className="text-[13px] text-slate-500 leading-relaxed mb-8">
                 We handle the dispute process with your bank end-to-end. You
-                only pay if we successfully recover your money — no recovery,
-                no fee.
+                only pay if we successfully recover your money — no recovery, no
+                fee.
               </p>
               <ul className="mt-auto space-y-2.5">
                 {[
@@ -908,7 +934,10 @@ export default function App() {
                   "Bank follow-up & escalation",
                   "Success-only fee",
                 ].map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-[13px] text-slate-500">
+                  <li
+                    key={f}
+                    className="flex items-start gap-2 text-[13px] text-slate-500"
+                  >
                     <CheckCircle2 className="h-4 w-4 text-slate-300 flex-shrink-0 mt-0.5" />
                     {f}
                   </li>
@@ -947,13 +976,13 @@ export default function App() {
               with the bank.
             </h2>
             <p className="mt-4 text-[15px] text-slate-500 leading-relaxed">
-              Join the waitlist. Early members get priority access, a free
-              first statement scan, and preferred rates on audit and recovery.
+              Join the waitlist. Early members get priority access, a free first
+              statement scan, and preferred rates on audit and recovery.
             </p>
 
             <Link
               to="/waitlist"
-              className="mt-8 inline-flex items-center gap-2 h-11 px-5 rounded-md bg-blue-600 text-white text-[14px] font-medium hover:bg-blue-700 transition-colors"
+              className="mt-8 inline-flex items-center gap-2 h-11 px-5 rounded-md bg-brand text-white text-[14px] font-medium hover:bg-brand-dark transition-colors"
             >
               Join the waitlist <ArrowRight className="h-4 w-4" />
             </Link>
@@ -968,7 +997,7 @@ export default function App() {
                   key={b}
                   className="flex items-center gap-1.5 text-[12px] text-slate-500"
                 >
-                  <CheckCircle2 className="h-3.5 w-3.5 text-blue-600" />
+                  <CheckCircle2 className="h-3.5 w-3.5 text-brand" />
                   {b}
                 </span>
               ))}
@@ -1001,7 +1030,7 @@ export default function App() {
                 Anything else?{" "}
                 <a
                   href="mailto:hello@koboback.com"
-                  className="text-blue-600 hover:text-blue-700 transition-colors"
+                  className="text-brand hover:text-brand-dark transition-colors"
                 >
                   Email us.
                 </a>
@@ -1033,9 +1062,7 @@ export default function App() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
             {/* Brand + tagline */}
             <div>
-              <p className="text-[14px] font-semibold text-slate-950">
-                KoboBack
-              </p>
+              <Logo size="sm" />
               <p className="mt-1 text-[13px] text-slate-400 max-w-[280px] leading-relaxed">
                 The consumer financial watchdog for Nigeria. We find money your
                 bank took that you didn't know about.

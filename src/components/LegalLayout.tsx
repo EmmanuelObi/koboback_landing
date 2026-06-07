@@ -6,6 +6,7 @@
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import Logo from "./Logo";
 
 interface LegalLayoutProps {
   title: string;
@@ -23,12 +24,7 @@ export function LegalLayout({
       {/* ── Minimal top bar ── */}
       <header className="sticky top-0 z-50 bg-white border-b border-slate-200">
         <div className="max-w-[1100px] mx-auto px-6 h-14 flex items-center justify-between">
-          <Link
-            to="/"
-            className="text-[15px] font-semibold text-slate-950 tracking-tight"
-          >
-            KoboBack
-          </Link>
+          <Logo to="/" size="md" />
           <Link
             to="/"
             className="inline-flex items-center gap-1.5 text-[13px] text-slate-500 hover:text-slate-900 transition-colors"

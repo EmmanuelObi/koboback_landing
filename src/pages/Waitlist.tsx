@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import Logo from "../components/Logo";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
 
@@ -181,12 +182,7 @@ export default function Waitlist() {
       {/* Navbar */}
       <header className="fixed inset-x-0 top-0 z-50 bg-white border-b border-slate-200">
         <div className="max-w-[1100px] mx-auto px-6 h-14 flex items-center justify-between">
-          <Link
-            to="/"
-            className="text-[15px] font-semibold text-slate-950 tracking-tight"
-          >
-            KoboBack
-          </Link>
+          <Logo to="/" size="md" />
           <Link
             to="/"
             className="text-[13px] text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-1"
@@ -206,8 +202,8 @@ export default function Waitlist() {
               transition={{ duration: 0.4, ease: "easeOut" }}
               className="text-center"
             >
-              <div className="mx-auto mb-6 h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center">
-                <CheckCircle2 className="h-6 w-6 text-blue-600" />
+              <div className="mx-auto mb-6 h-12 w-12 rounded-full bg-brand-muted flex items-center justify-center">
+                <CheckCircle2 className="h-6 w-6 text-brand" />
               </div>
               <h1 className="text-[28px] font-bold text-slate-950 tracking-tight">
                 You're on the list
@@ -239,7 +235,7 @@ export default function Waitlist() {
                 </div>
                 <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
                   <motion.div
-                    className="h-full bg-blue-600 rounded-full"
+                    className="h-full bg-brand rounded-full"
                     animate={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
                     transition={{ duration: 0.35, ease: "easeOut" }}
                   />
@@ -276,7 +272,7 @@ export default function Waitlist() {
                       onChange={(e) => set("name", e.target.value)}
                       placeholder="Ada Okonkwo"
                       autoFocus
-                      className="w-full h-11 px-4 rounded-md border border-slate-200 text-[14px] text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition"
+                      className="w-full h-11 px-4 rounded-md border border-slate-200 text-[14px] text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition"
                     />
 
                     <label className="block mt-4 mb-1.5 text-[13px] font-medium text-slate-700">
@@ -288,7 +284,7 @@ export default function Waitlist() {
                       onChange={(e) => set("email", e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && next()}
                       placeholder="you@example.com"
-                      className="w-full h-11 px-4 rounded-md border border-slate-200 text-[14px] text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition"
+                      className="w-full h-11 px-4 rounded-md border border-slate-200 text-[14px] text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition"
                     />
 
                     {fieldError && (
@@ -299,7 +295,7 @@ export default function Waitlist() {
 
                     <button
                       onClick={next}
-                      className="mt-5 w-full h-11 rounded-md bg-blue-600 text-white text-[14px] font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                      className="mt-5 w-full h-11 rounded-md bg-brand text-white text-[14px] font-medium hover:bg-brand-dark transition-colors flex items-center justify-center gap-2"
                     >
                       Continue <ArrowRight className="h-4 w-4" />
                     </button>
@@ -346,7 +342,7 @@ export default function Waitlist() {
                     <select
                       value={form.bank}
                       onChange={(e) => set("bank", e.target.value)}
-                      className="w-full h-11 px-3 rounded-md border border-slate-200 text-[14px] text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition appearance-none"
+                      className="w-full h-11 px-3 rounded-md border border-slate-200 text-[14px] text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition appearance-none"
                     >
                       <option value="" disabled>
                         Select your bank…
@@ -374,7 +370,7 @@ export default function Waitlist() {
                             key={opt.value}
                             className={`flex items-center gap-3 p-3.5 rounded-lg border cursor-pointer transition-colors ${
                               form.monthlyTransactions === opt.value
-                                ? "border-blue-600 bg-blue-50"
+                                ? "border-brand bg-brand-muted"
                                 : "border-slate-200 hover:border-slate-300"
                             }`}
                           >
@@ -386,7 +382,7 @@ export default function Waitlist() {
                               onChange={(e) =>
                                 set("monthlyTransactions", e.target.value)
                               }
-                              className="accent-blue-600"
+                              className="accent-brand"
                             />
                             <span className="text-[14px] text-slate-700">
                               {opt.label}
@@ -411,7 +407,7 @@ export default function Waitlist() {
                       </button>
                       <button
                         onClick={next}
-                        className="flex-1 h-11 rounded-md bg-blue-600 text-white text-[14px] font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                        className="flex-1 h-11 rounded-md bg-brand text-white text-[14px] font-medium hover:bg-brand-dark transition-colors flex items-center justify-center gap-2"
                       >
                         Continue <ArrowRight className="h-4 w-4" />
                       </button>
@@ -456,7 +452,7 @@ export default function Waitlist() {
                             key={opt.value}
                             className={`flex items-center gap-3 p-3.5 rounded-lg border cursor-pointer transition-colors ${
                               form.noticedCharge === opt.value
-                                ? "border-blue-600 bg-blue-50"
+                                ? "border-brand bg-brand-muted"
                                 : "border-slate-200 hover:border-slate-300"
                             }`}
                           >
@@ -468,7 +464,7 @@ export default function Waitlist() {
                               onChange={(e) =>
                                 set("noticedCharge", e.target.value)
                               }
-                              className="accent-blue-600"
+                              className="accent-brand"
                             />
                             <span className="text-[14px] text-slate-700">
                               {opt.label}
@@ -500,7 +496,7 @@ export default function Waitlist() {
                             key={opt.value}
                             className={`flex items-center gap-3 p-3.5 rounded-lg border cursor-pointer transition-colors ${
                               form.willingToPay === opt.value
-                                ? "border-blue-600 bg-blue-50"
+                                ? "border-brand bg-brand-muted"
                                 : "border-slate-200 hover:border-slate-300"
                             }`}
                           >
@@ -512,7 +508,7 @@ export default function Waitlist() {
                               onChange={(e) =>
                                 set("willingToPay", e.target.value)
                               }
-                              className="accent-blue-600"
+                              className="accent-brand"
                             />
                             <span className="text-[14px] text-slate-700">
                               {opt.label}
@@ -545,7 +541,7 @@ export default function Waitlist() {
                       <button
                         onClick={submit}
                         disabled={status === "loading"}
-                        className="flex-1 h-11 rounded-md bg-blue-600 text-white text-[14px] font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="flex-1 h-11 rounded-md bg-brand text-white text-[14px] font-medium hover:bg-brand-dark transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                       >
                         {status === "loading" ? (
                           <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />

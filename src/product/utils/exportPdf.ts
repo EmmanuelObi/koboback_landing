@@ -107,54 +107,98 @@ export function exportReportAsPdf(report: AuditReport): void {
     doc.text(text, x, yy);
   };
 
+  /** Draw a label/value row inside the report header meta panel. */
+  const metaRow = (
+    rowLabel: string,
+    value: string,
+    x: number,
+    rowY: number,
+    labelW: number,
+    valueMaxW: number,
+  ) => {
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "bold");
+    setColor(C.muted);
+    doc.text(rowLabel.toUpperCase(), x, rowY);
+
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "normal");
+    setColor(C.dark);
+    doc.text(sanitize(value), x + labelW, rowY, { maxWidth: valueMaxW });
+  };
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   //  PAGE 1 — HEADER
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  const headerH = 38;
   const accentH = 2.5;
-  const logoH = 9;
+  const logoH = 7.5;
   const logoW = logoH * LOGO_ASPECT;
-  const logoX = pw - mx - logoW;
-  const titleMaxW = logoX - mx - 6;
+  const metaLabelW = 24;
+  const metaPad = 5;
+  const metaRowH = 6;
+  const generatedOn = new Date().toLocaleDateString("en-NG", {
+    dateStyle: "long",
+  });
 
-  // Light header — green wordmark needs contrast (not on brand fill)
-  setFill(C.brandLight);
+  const metaRows: [string, string][] = [
+    ["Bank", report.bank_name],
+    ...(report.statement_period
+      ? ([["Period", report.statement_period]] as [string, string][])
+      : []),
+    ...(report.account_name
+      ? ([["Account", report.account_name]] as [string, string][])
+      : []),
+  ];
+
+  const metaPanelH = metaPad * 2 + metaRows.length * metaRowH;
+  const headerTop = 10;
+  const titleY = headerTop + logoH + 9;
+  const ruleY = titleY + 4;
+  const metaPanelY = ruleY + 5;
+  const headerH = metaPanelY + metaPanelH + 6;
+
+  // White letterhead — green wordmark reads clearly
+  setFill(C.white);
   doc.rect(0, 0, pw, headerH, "F");
 
-  doc.addImage(
-    logoBase64,
-    "PNG",
-    logoX,
-    (headerH - logoH) / 2,
-    logoW,
-    logoH,
-  );
-
-  doc.setFontSize(20);
-  doc.setFont("helvetica", "bold");
-  setColor(C.dark);
-  doc.text("Bank Fee Audit Report", mx, 14);
-
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  setColor(C.body);
-  const parts = [
-    report.bank_name,
-    report.statement_period ? `Period: ${report.statement_period}` : null,
-    report.account_name ? `Account: ${report.account_name}` : null,
-  ]
-    .filter(Boolean)
-    .join("   \u00B7   ");
-  doc.text(sanitize(parts), mx, 22, { maxWidth: titleMaxW });
+  // Row 1 — logo (left) + generated date (right)
+  doc.addImage(logoBase64, "PNG", mx, headerTop, logoW, logoH);
 
   doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
   setColor(C.muted);
-  doc.text(
-    `Generated ${new Date().toLocaleDateString("en-NG", { dateStyle: "long" })}`,
-    mx,
-    30,
-  );
+  doc.text(`Generated ${generatedOn}`, pw - mx, headerTop + logoH - 1, {
+    align: "right",
+  });
+
+  // Row 2 — report title (full width)
+  doc.setFontSize(18);
+  doc.setFont("helvetica", "bold");
+  setColor(C.dark);
+  doc.text("Bank Fee Audit Report", mx, titleY);
+
+  // Divider
+  setDraw(C.brand);
+  doc.setLineWidth(0.5);
+  doc.line(mx, ruleY, pw - mx, ruleY);
+
+  // Row 3 — structured metadata panel
+  setFill(C.brandLight);
+  setDraw(C.border);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(mx, metaPanelY, cw, metaPanelH, 2, 2, "FD");
+
+  metaRows.forEach(([rowLabel, value], i) => {
+    metaRow(
+      rowLabel,
+      value,
+      mx + metaPad,
+      metaPanelY + metaPad + 4 + i * metaRowH,
+      metaLabelW,
+      cw - metaPad * 2 - metaLabelW,
+    );
+  });
 
   // Brand accent rule beneath header
   setFill(C.brand);

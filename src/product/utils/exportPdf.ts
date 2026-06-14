@@ -2,7 +2,10 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { AuditReport } from "../api/client";
 import { brandRgb } from "../../brand/colors";
-import { logoMarkBase64 } from "../../brand/logoMarkBase64";
+import { logoBase64 } from "../../brand/logoBase64";
+
+/** Wordmark aspect ratio from `public/logo.png` content bounds (~1339×214). */
+const LOGO_ASPECT = 1339 / 214;
 
 // jspdf-autotable extends the jsPDF instance
 interface JsPDFWithAutoTable extends jsPDF {
@@ -108,23 +111,34 @@ export function exportReportAsPdf(report: AuditReport): void {
   //  PAGE 1 — HEADER
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  // Full-width brand bar
-  setFill(C.brand);
-  doc.rect(0, 0, pw, 32, "F");
+  const headerH = 38;
+  const accentH = 2.5;
+  const logoH = 9;
+  const logoW = logoH * LOGO_ASPECT;
+  const logoX = pw - mx - logoW;
+  const titleMaxW = logoX - mx - 6;
 
-  // Logo mark on brand bar
-  doc.addImage(logoMarkBase64, "PNG", pw - mx - 14, 6, 14, 14);
+  // Light header — green wordmark needs contrast (not on brand fill)
+  setFill(C.brandLight);
+  doc.rect(0, 0, pw, headerH, "F");
 
-  // Title on brand bar
-  doc.setFontSize(22);
+  doc.addImage(
+    logoBase64,
+    "PNG",
+    logoX,
+    (headerH - logoH) / 2,
+    logoW,
+    logoH,
+  );
+
+  doc.setFontSize(20);
   doc.setFont("helvetica", "bold");
-  setColor(C.white);
-  doc.text("Bank Fee Audit Report", mx, 16);
+  setColor(C.dark);
+  doc.text("Bank Fee Audit Report", mx, 14);
 
-  // Subtitle on brand bar
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  setColor(C.onBrandSubtle);
+  setColor(C.body);
   const parts = [
     report.bank_name,
     report.statement_period ? `Period: ${report.statement_period}` : null,
@@ -132,18 +146,21 @@ export function exportReportAsPdf(report: AuditReport): void {
   ]
     .filter(Boolean)
     .join("   \u00B7   ");
-  doc.text(sanitize(parts), mx, 24);
+  doc.text(sanitize(parts), mx, 22, { maxWidth: titleMaxW });
 
-  // Generated date — right-aligned on the bar
   doc.setFontSize(8);
+  setColor(C.muted);
   doc.text(
-    new Date().toLocaleDateString("en-NG", { dateStyle: "long" }),
-    pw - mx,
-    24,
-    { align: "right" },
+    `Generated ${new Date().toLocaleDateString("en-NG", { dateStyle: "long" })}`,
+    mx,
+    30,
   );
 
-  y = 40;
+  // Brand accent rule beneath header
+  setFill(C.brand);
+  doc.rect(0, headerH, pw, accentH, "F");
+
+  y = headerH + accentH + 8;
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   //  KEY METRICS — 3 cards

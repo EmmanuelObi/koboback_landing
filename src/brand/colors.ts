@@ -1,19 +1,19 @@
 /** KoboBack brand palette — single source of truth for web and PDF. */
 
 export const brandHex = {
-  DEFAULT: "#85BB65",
-  light: "#90EE90",
-  muted: "#EAF6E4",
-  dark: "#6FA048",
+  DEFAULT: "#108C50",
+  light: "#3AD48A",
+  muted: "#EAF5F0",
+  dark: "#0C693C",
 } as const;
 
 export const brandRgb = {
-  DEFAULT: [133, 187, 101] as const,
-  light: [144, 238, 144] as const,
-  muted: [234, 246, 228] as const,
-  dark: [111, 160, 72] as const,
+  DEFAULT: [16, 140, 80] as const,
+  light: [58, 212, 138] as const,
+  muted: [234, 245, 240] as const,
+  dark: [12, 105, 60] as const,
   onBrand: [255, 255, 255] as const,
-  onBrandSubtle: [240, 250, 235] as const,
+  onBrandSubtle: [239, 245, 242] as const,
 } as const;
 
 /** Tailwind class shortcuts for consistent usage. */

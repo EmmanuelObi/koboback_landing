@@ -4,9 +4,9 @@ type LogoVariant = "full" | "mark";
 type LogoSize = "sm" | "md" | "lg";
 
 const heights: Record<LogoSize, string> = {
-  sm: "h-6",
-  md: "h-7",
-  lg: "h-8",
+  sm: "h-32",
+  md: "h-36",
+  lg: "h-40",
 };
 
 interface LogoProps {
@@ -22,7 +22,7 @@ export default function Logo({
   className = "",
   to,
 }: LogoProps) {
-  const src = variant === "mark" ? "/logo-mark.svg" : "/logo.svg";
+  const src = variant === "mark" ? "/logo-mark.png" : "/logo.png";
   const alt = "KoboBack";
   const img = (
     <img

@@ -1,8 +1,8 @@
 /**
  * KoboBack Landing Page
  * Design system: Stripe / Linear inspired — minimal, restrained, production-grade.
- * Palette: slate-950 (primary) · slate-500 (secondary) · brand #85BB65 / #90EE90 (accent CTA)
- * Backgrounds: white / slate-50 alternating
+ * Palette: slate-950 (primary) · slate-500 (secondary) · brand #108C50 (logo green)
+ * Backgrounds: white / brand-muted alternating · brand accents on icons, eyebrows, borders
  * No gradients · No glassmorphism · No mixed accent colors
  */
 
@@ -198,7 +198,7 @@ const faqs = [
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-slate-200 last:border-none">
+    <div className="border-b border-brand/15 last:border-none">
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between py-5 text-left group"
@@ -207,8 +207,8 @@ function FAQItem({ q, a }: { q: string; a: string }) {
           {q}
         </span>
         <ChevronRight
-          className={`h-4 w-4 text-slate-400 flex-shrink-0 transition-transform duration-200 ${
-            open ? "rotate-90" : ""
+          className={`h-4 w-4 flex-shrink-0 transition-transform duration-200 ${
+            open ? "rotate-90 text-brand" : "text-brand/40 group-hover:text-brand"
           }`}
         />
       </button>
@@ -237,7 +237,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-2xl font-bold text-slate-950 tracking-tight">
+      <span className="text-2xl font-bold text-brand tracking-tight">
         {value}
       </span>
       <span className="text-[13px] text-slate-500 leading-snug">{label}</span>
@@ -271,7 +271,7 @@ export default function App() {
       {/* ══════════════════════════════════════════════
           NAVBAR
       ══════════════════════════════════════════════ */}
-      <header className="fixed inset-x-0 top-0 z-50 bg-white border-b border-slate-200">
+      <header className="fixed inset-x-0 top-0 z-50 bg-white border-b border-brand/10">
         <div className="max-w-[1100px] mx-auto px-6 h-14 flex items-center justify-between">
           {/* Logo */}
           <Logo to="/" size="md" />
@@ -282,7 +282,7 @@ export default function App() {
               <a
                 key={l.href}
                 href={l.href}
-                className="text-[13px] text-slate-500 hover:text-slate-900 transition-colors"
+                className="text-[13px] text-slate-500 hover:text-brand transition-colors"
               >
                 {l.label}
               </a>
@@ -293,7 +293,7 @@ export default function App() {
           <div className="hidden md:flex items-center gap-2">
             <Link
               to="/product"
-              className="inline-flex items-center h-8 px-4 rounded-md border border-slate-200 text-slate-700 text-[13px] font-medium hover:border-slate-300 transition-colors"
+              className="inline-flex items-center h-8 px-4 rounded-md border border-brand/20 text-slate-700 text-[13px] font-medium hover:border-brand/40 hover:text-brand-dark transition-colors"
             >
               Start audit
             </Link>
@@ -308,7 +308,7 @@ export default function App() {
           {/* Mobile toggle */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-1.5 text-slate-500 hover:text-slate-900 transition-colors"
+            className="md:hidden p-1.5 text-slate-500 hover:text-brand transition-colors"
             aria-label="Toggle navigation"
           >
             {mobileOpen ? (
@@ -327,7 +327,7 @@ export default function App() {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.18, ease: "easeInOut" }}
-              className="overflow-hidden border-t border-slate-100 bg-white md:hidden"
+              className="overflow-hidden border-t border-brand/10 bg-white md:hidden"
             >
               <div className="px-6 py-4 flex flex-col gap-1">
                 {navLinks.map((l) => (
@@ -335,7 +335,7 @@ export default function App() {
                     key={l.href}
                     href={l.href}
                     onClick={() => setMobileOpen(false)}
-                    className="py-2.5 text-[14px] text-slate-600 hover:text-slate-900 transition-colors"
+                    className="py-2.5 text-[14px] text-slate-600 hover:text-brand transition-colors"
                   >
                     {l.label}
                   </a>
@@ -343,7 +343,7 @@ export default function App() {
                 <Link
                   to="/product"
                   onClick={() => setMobileOpen(false)}
-                  className="mt-2 inline-flex items-center justify-center h-9 px-4 rounded-md border border-slate-200 text-slate-700 text-[13px] font-medium"
+                  className="mt-2 inline-flex items-center justify-center h-9 px-4 rounded-md border border-brand/20 text-slate-700 text-[13px] font-medium"
                 >
                   Start audit
                 </Link>
@@ -365,7 +365,7 @@ export default function App() {
       ══════════════════════════════════════════════ */}
       <section
         ref={heroRef}
-        className="pt-32 pb-24 md:pt-40 md:pb-32 bg-white border-b border-slate-200"
+        className="pt-32 pb-24 md:pt-40 md:pb-32 bg-white border-b border-brand/10"
       >
         <motion.div
           style={{ y: heroY, opacity: heroOpacity }}
@@ -378,9 +378,9 @@ export default function App() {
             className="max-w-[680px]"
           >
             {/* Eyebrow */}
-            <div className="inline-flex items-center gap-2 mb-8 px-3 py-1 rounded-full border border-slate-200 bg-slate-50">
+            <div className="inline-flex items-center gap-2 mb-8 px-3 py-1 rounded-full border border-brand/20 bg-brand-muted">
               <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-              <span className="text-[12px] font-medium text-slate-500 tracking-wide">
+              <span className="text-[12px] font-medium text-brand-dark tracking-wide">
                 AI-powered bank error detection · Nigeria
               </span>
             </div>
@@ -389,7 +389,7 @@ export default function App() {
             <h1 className="text-[40px] md:text-[52px] font-bold text-slate-950 leading-[1.12] tracking-[-0.02em]">
               Your bank may owe you money.
               <br />
-              <span className="text-slate-400">
+              <span className="text-brand/50">
                 Most people never find out.
               </span>
             </h1>
@@ -411,7 +411,7 @@ export default function App() {
               </Link>
               <Link
                 to="/waitlist"
-                className="inline-flex items-center gap-2 h-11 px-5 rounded-md border border-slate-200 text-slate-600 text-[14px] font-medium hover:border-slate-300 hover:text-slate-900 transition-colors"
+                className="inline-flex items-center gap-2 h-11 px-5 rounded-md border border-brand/20 text-slate-600 text-[14px] font-medium hover:border-brand/40 hover:text-brand-dark transition-colors"
               >
                 Join the waitlist
               </Link>
@@ -428,7 +428,7 @@ export default function App() {
         {/* Scroll indicator */}
         <div className="mt-20 flex justify-center">
           <a href="#problem" aria-label="Scroll down">
-            <ChevronDown className="h-5 w-5 text-slate-300 animate-bounce" />
+            <ChevronDown className="h-5 w-5 text-brand/40 animate-bounce" />
           </a>
         </div>
       </section>
@@ -436,13 +436,13 @@ export default function App() {
       {/* ══════════════════════════════════════════════
           STATS BAR
       ══════════════════════════════════════════════ */}
-      <section className="bg-slate-50 border-b border-slate-200 py-12">
+      <section className="bg-brand-muted border-b border-brand/10 py-12">
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
           variants={fadeUp}
-          className="max-w-[1100px] mx-auto px-6 grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-0 sm:divide-x sm:divide-slate-200"
+          className="max-w-[1100px] mx-auto px-6 grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-0 sm:divide-x sm:divide-brand/15"
         >
           <div className="sm:pr-10">
             <Stat
@@ -470,7 +470,7 @@ export default function App() {
       ══════════════════════════════════════════════ */}
       <section
         id="problem"
-        className="py-24 bg-white border-b border-slate-200"
+        className="py-24 bg-white border-b border-brand/10"
       >
         <div className="max-w-[1100px] mx-auto px-6">
           <motion.div
@@ -481,7 +481,7 @@ export default function App() {
             custom={0}
             className="max-w-[520px] mb-14"
           >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-brand mb-4">
               The problem
             </p>
             <h2 className="text-[30px] md:text-[36px] font-bold text-slate-950 leading-[1.2] tracking-[-0.02em]">
@@ -505,10 +505,10 @@ export default function App() {
                 viewport={{ once: true, margin: "-40px" }}
                 variants={fade}
                 custom={i}
-                className="p-6 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-colors"
+                className="p-6 rounded-xl border border-brand/15 bg-white hover:border-brand/35 transition-colors"
               >
-                <div className="mb-4 h-9 w-9 rounded-lg bg-slate-100 flex items-center justify-center">
-                  <p.icon className="h-4 w-4 text-slate-500" />
+                <div className="mb-4 h-9 w-9 rounded-lg bg-brand-muted border border-brand/10 flex items-center justify-center">
+                  <p.icon className="h-4 w-4 text-brand" />
                 </div>
                 <h3 className="text-[15px] font-semibold text-slate-900 mb-2">
                   {p.title}
@@ -526,13 +526,13 @@ export default function App() {
             whileInView="visible"
             viewport={{ once: true }}
             variants={fadeUp}
-            className="mt-16 border-l-2 border-slate-200 pl-6 max-w-[600px]"
+            className="mt-16 border-l-2 border-brand pl-6 max-w-[600px]"
           >
             <p className="text-[17px] text-slate-600 leading-relaxed italic">
               "The average Nigerian bank customer has at least one unresolved
               billing error on their statement. They simply don't know it yet."
             </p>
-            <p className="mt-3 text-[12px] text-slate-400">
+            <p className="mt-3 text-[12px] text-brand/60">
               Based on industry analysis of retail banking patterns in Nigeria
             </p>
           </motion.div>
@@ -544,7 +544,7 @@ export default function App() {
       ══════════════════════════════════════════════ */}
       <section
         id="how-it-works"
-        className="py-24 bg-slate-50 border-b border-slate-200"
+        className="py-24 bg-brand-muted border-b border-brand/10"
       >
         <div className="max-w-[1100px] mx-auto px-6">
           <motion.div
@@ -555,7 +555,7 @@ export default function App() {
             custom={0}
             className="max-w-[480px] mb-14"
           >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-brand mb-4">
               How it works
             </p>
             <h2 className="text-[30px] md:text-[36px] font-bold text-slate-950 leading-[1.2] tracking-[-0.02em]">
@@ -580,14 +580,14 @@ export default function App() {
               >
                 {/* Connector (desktop) */}
                 {i < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-4 left-[calc(100%+12px)] w-[calc(100%-24px)] h-px bg-slate-200 z-10" />
+                  <div className="hidden lg:block absolute top-4 left-[calc(100%+12px)] w-[calc(100%-24px)] h-px bg-brand/25 z-10" />
                 )}
-                <div className="p-6 rounded-xl border border-slate-200 bg-white h-full hover:border-slate-300 transition-colors">
+                <div className="p-6 rounded-xl border border-brand/15 bg-white h-full hover:border-brand/35 transition-colors">
                   <div className="flex items-center justify-between mb-5">
-                    <div className="h-9 w-9 rounded-lg bg-slate-100 flex items-center justify-center">
-                      <s.icon className="h-4 w-4 text-slate-500" />
+                    <div className="h-9 w-9 rounded-lg bg-brand-muted border border-brand/10 flex items-center justify-center">
+                      <s.icon className="h-4 w-4 text-brand" />
                     </div>
-                    <span className="text-[11px] font-bold text-slate-300 tracking-widest">
+                    <span className="text-[11px] font-bold text-brand/35 tracking-widest">
                       {s.number}
                     </span>
                   </div>
@@ -607,7 +607,7 @@ export default function App() {
       {/* ══════════════════════════════════════════════
           WHY TRUST US
       ══════════════════════════════════════════════ */}
-      <section id="trust" className="py-24 bg-white border-b border-slate-200">
+      <section id="trust" className="py-24 bg-white border-b border-brand/10">
         <div className="max-w-[1100px] mx-auto px-6">
           <motion.div
             initial="hidden"
@@ -617,7 +617,7 @@ export default function App() {
             custom={0}
             className="max-w-[480px] mb-14"
           >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-brand mb-4">
               Why trust us
             </p>
             <h2 className="text-[30px] md:text-[36px] font-bold text-slate-950 leading-[1.2] tracking-[-0.02em]">
@@ -637,8 +637,8 @@ export default function App() {
                 variants={fade}
                 custom={i}
               >
-                <div className="mb-4 h-9 w-9 rounded-lg bg-slate-100 flex items-center justify-center">
-                  <t.icon className="h-4 w-4 text-slate-500" />
+                <div className="mb-4 h-9 w-9 rounded-lg bg-brand-muted border border-brand/10 flex items-center justify-center">
+                  <t.icon className="h-4 w-4 text-brand" />
                 </div>
                 <h3 className="text-[14px] font-semibold text-slate-900 mb-2">
                   {t.title}
@@ -655,7 +655,7 @@ export default function App() {
       {/* ══════════════════════════════════════════════
           UNIQUE ANGLE / DIFFERENTIATOR
       ══════════════════════════════════════════════ */}
-      <section className="py-24 bg-slate-950 border-b border-slate-800">
+      <section className="py-24 bg-slate-950 border-b border-brand/20">
         <div className="max-w-[1100px] mx-auto px-6">
           <div className="lg:grid lg:grid-cols-[1fr_1fr] lg:gap-16 lg:items-start">
             {/* Left */}
@@ -666,13 +666,13 @@ export default function App() {
               variants={fade}
               custom={0}
             >
-              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500 mb-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-brand-light mb-4">
                 What makes us different
               </p>
               <h2 className="text-[30px] md:text-[36px] font-bold text-white leading-[1.2] tracking-[-0.02em]">
                 Your financial watchdog.
                 <br />
-                <span className="text-slate-400">
+                <span className="text-brand-light/70">
                   Not just another fintech app.
                 </span>
               </h2>
@@ -684,7 +684,7 @@ export default function App() {
               </p>
               <Link
                 to="/waitlist"
-                className="mt-8 inline-flex items-center gap-2 h-10 px-5 rounded-md bg-white text-slate-900 text-[13px] font-medium hover:bg-slate-100 transition-colors"
+                className="mt-8 inline-flex items-center gap-2 h-10 px-5 rounded-md bg-brand text-white text-[13px] font-medium hover:bg-brand-dark transition-colors"
               >
                 Join the waitlist <ArrowRight className="h-4 w-4" />
               </Link>
@@ -700,10 +700,10 @@ export default function App() {
                   viewport={{ once: true }}
                   variants={fade}
                   custom={i}
-                  className="flex items-start gap-4 p-5 border border-slate-800 rounded-xl mb-3 last:mb-0 hover:border-slate-700 transition-colors"
+                  className="flex items-start gap-4 p-5 border border-brand/20 rounded-xl mb-3 last:mb-0 hover:border-brand/40 transition-colors"
                 >
-                  <div className="flex-shrink-0 mt-0.5 h-8 w-8 rounded-md bg-slate-800 flex items-center justify-center">
-                    <d.icon className="h-4 w-4 text-slate-400" />
+                  <div className="flex-shrink-0 mt-0.5 h-8 w-8 rounded-md bg-brand/15 flex items-center justify-center">
+                    <d.icon className="h-4 w-4 text-brand-light" />
                   </div>
                   <div>
                     <p className="text-[14px] font-medium text-white">
@@ -723,7 +723,7 @@ export default function App() {
       {/* ══════════════════════════════════════════════
           TESTIMONIALS
       ══════════════════════════════════════════════ */}
-      <section className="py-24 bg-slate-50 border-b border-slate-200">
+      <section className="py-24 bg-brand-muted border-b border-brand/10">
         <div className="max-w-[1100px] mx-auto px-6">
           <motion.div
             initial="hidden"
@@ -733,7 +733,7 @@ export default function App() {
             custom={0}
             className="mb-14"
           >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-brand mb-4">
               What people are saying
             </p>
             <h2 className="text-[30px] md:text-[36px] font-bold text-slate-950 leading-[1.2] tracking-[-0.02em] max-w-[480px]">
@@ -750,13 +750,13 @@ export default function App() {
                 viewport={{ once: true }}
                 variants={fade}
                 custom={i}
-                className="p-6 rounded-xl border border-slate-200 bg-white"
+                className="p-6 rounded-xl border border-brand/15 bg-white hover:border-brand/30 transition-colors"
               >
                 <p className="text-[15px] text-slate-600 leading-relaxed mb-6">
                   "{t.quote}"
                 </p>
-                <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
-                  <div className="h-8 w-8 rounded-full bg-slate-900 flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0">
+                <div className="flex items-center gap-3 pt-4 border-t border-brand/10">
+                  <div className="h-8 w-8 rounded-full bg-brand flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0">
                     {t.initials}
                   </div>
                   <div>
@@ -777,7 +777,7 @@ export default function App() {
       ══════════════════════════════════════════════ */}
       <section
         id="pricing"
-        className="py-24 bg-white border-b border-slate-200"
+        className="py-24 bg-white border-b border-brand/10"
       >
         <div className="max-w-[1100px] mx-auto px-6">
           <motion.div
@@ -788,13 +788,13 @@ export default function App() {
             custom={0}
             className="max-w-[480px] mb-14"
           >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-brand mb-4">
               Pricing
             </p>
             <h2 className="text-[30px] md:text-[36px] font-bold text-slate-950 leading-[1.2] tracking-[-0.02em]">
               Simple, transparent pricing.
               <br />
-              <span className="text-slate-400">
+              <span className="text-brand/60">
                 Pay only for what you need.
               </span>
             </h2>
@@ -808,9 +808,9 @@ export default function App() {
               viewport={{ once: true }}
               variants={fade}
               custom={0}
-              className="p-7 rounded-xl border border-slate-200 bg-white flex flex-col"
+              className="p-7 rounded-xl border border-brand/15 bg-white flex flex-col hover:border-brand/30 transition-colors"
             >
-              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-brand/60 mb-5">
                 Free
               </p>
               <p className="text-[36px] font-bold text-slate-950 tracking-tight leading-none mb-1">
@@ -835,14 +835,14 @@ export default function App() {
                     key={f}
                     className="flex items-start gap-2 text-[13px] text-slate-500"
                   >
-                    <CheckCircle2 className="h-4 w-4 text-slate-300 flex-shrink-0 mt-0.5" />
+                    <CheckCircle2 className="h-4 w-4 text-brand/50 flex-shrink-0 mt-0.5" />
                     {f}
                   </li>
                 ))}
               </ul>
               <Link
                 to="/waitlist"
-                className="mt-8 inline-flex items-center justify-center h-10 px-4 rounded-md border border-slate-200 text-slate-700 text-[13px] font-medium hover:border-slate-300 hover:text-slate-900 transition-colors"
+                className="mt-8 inline-flex items-center justify-center h-10 px-4 rounded-md border border-brand/20 text-slate-700 text-[13px] font-medium hover:border-brand/40 hover:text-brand-dark transition-colors"
               >
                 Get early access
               </Link>
@@ -908,9 +908,9 @@ export default function App() {
               viewport={{ once: true }}
               variants={fade}
               custom={2}
-              className="p-7 rounded-xl border border-slate-200 bg-white flex flex-col"
+              className="p-7 rounded-xl border border-brand/15 bg-white flex flex-col hover:border-brand/30 transition-colors"
             >
-              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-brand/60 mb-5">
                 Recovery
               </p>
               <p className="text-[36px] font-bold text-slate-950 tracking-tight leading-none mb-1">
@@ -938,14 +938,14 @@ export default function App() {
                     key={f}
                     className="flex items-start gap-2 text-[13px] text-slate-500"
                   >
-                    <CheckCircle2 className="h-4 w-4 text-slate-300 flex-shrink-0 mt-0.5" />
+                    <CheckCircle2 className="h-4 w-4 text-brand/50 flex-shrink-0 mt-0.5" />
                     {f}
                   </li>
                 ))}
               </ul>
               <Link
                 to="/waitlist"
-                className="mt-8 inline-flex items-center justify-center h-10 px-4 rounded-md border border-slate-200 text-slate-700 text-[13px] font-medium hover:border-slate-300 hover:text-slate-900 transition-colors"
+                className="mt-8 inline-flex items-center justify-center h-10 px-4 rounded-md border border-brand/20 text-slate-700 text-[13px] font-medium hover:border-brand/40 hover:text-brand-dark transition-colors"
               >
                 Get early access
               </Link>
@@ -957,7 +957,7 @@ export default function App() {
       {/* ══════════════════════════════════════════════
           WAITLIST CTA
       ══════════════════════════════════════════════ */}
-      <section className="py-24 bg-white border-b border-slate-200">
+      <section className="py-24 bg-brand-muted border-b border-brand/10">
         <div className="max-w-[1100px] mx-auto px-6">
           <motion.div
             initial="hidden"
@@ -967,7 +967,7 @@ export default function App() {
             custom={0}
             className="max-w-[560px]"
           >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-brand mb-4">
               Early access
             </p>
             <h2 className="text-[30px] md:text-[40px] font-bold text-slate-950 leading-[1.15] tracking-[-0.02em]">
@@ -1009,7 +1009,7 @@ export default function App() {
       {/* ══════════════════════════════════════════════
           FAQ
       ══════════════════════════════════════════════ */}
-      <section id="faq" className="py-24 bg-slate-50 border-b border-slate-200">
+      <section id="faq" className="py-24 bg-white border-b border-brand/10">
         <div className="max-w-[1100px] mx-auto px-6">
           <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-16">
             {/* Left label */}
@@ -1020,7 +1020,7 @@ export default function App() {
               variants={fade}
               custom={0}
             >
-              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-brand mb-4">
                 FAQ
               </p>
               <h2 className="text-[24px] font-bold text-slate-950 leading-[1.25] tracking-[-0.02em]">
@@ -1057,7 +1057,7 @@ export default function App() {
       {/* ══════════════════════════════════════════════
           FOOTER
       ══════════════════════════════════════════════ */}
-      <footer className="bg-white py-12">
+      <footer className="bg-white py-12 border-t border-brand/10">
         <div className="max-w-[1100px] mx-auto px-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
             {/* Brand + tagline */}
@@ -1072,41 +1072,41 @@ export default function App() {
             {/* Nav columns */}
             <div className="flex gap-12 text-[13px]">
               <div className="flex flex-col gap-3">
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-brand/60">
                   Product
                 </p>
                 <a
                   href="#how-it-works"
-                  className="text-slate-500 hover:text-slate-900 transition-colors"
+                  className="text-slate-500 hover:text-brand transition-colors"
                 >
                   How it works
                 </a>
                 <a
                   href="#trust"
-                  className="text-slate-500 hover:text-slate-900 transition-colors"
+                  className="text-slate-500 hover:text-brand transition-colors"
                 >
                   Why trust us
                 </a>
                 <Link
                   to="/waitlist"
-                  className="text-slate-500 hover:text-slate-900 transition-colors"
+                  className="text-slate-500 hover:text-brand transition-colors"
                 >
                   Join waitlist
                 </Link>
               </div>
               <div className="flex flex-col gap-3">
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-brand/60">
                   Legal
                 </p>
                 <Link
                   to="/privacy"
-                  className="text-slate-500 hover:text-slate-900 transition-colors"
+                  className="text-slate-500 hover:text-brand transition-colors"
                 >
                   Privacy policy
                 </Link>
                 <Link
                   to="/terms"
-                  className="text-slate-500 hover:text-slate-900 transition-colors"
+                  className="text-slate-500 hover:text-brand transition-colors"
                 >
                   Terms of service
                 </Link>
@@ -1115,7 +1115,7 @@ export default function App() {
           </div>
 
           {/* Bottom bar */}
-          <div className="mt-10 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-slate-400">
+          <div className="mt-10 pt-6 border-t border-brand/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-slate-400">
             <p>
               &copy; {new Date().getFullYear()} KoboBack. All rights reserved.
             </p>

@@ -2,10 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { AuditReport } from "../api/client";
 import { brandRgb } from "../../brand/colors";
-import { logoBase64 } from "../../brand/logoBase64";
-
-/** Wordmark aspect ratio from `public/logo.png` content bounds (~1339×214). */
-const LOGO_ASPECT = 1339 / 214;
+import { logoBase64, LOGO_ASPECT } from "../../brand/logoBase64";
 
 // jspdf-autotable extends the jsPDF instance
 interface JsPDFWithAutoTable extends jsPDF {

@@ -34,6 +34,7 @@ import {
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Logo from "./components/Logo";
+import CookieBanner from "./components/CookieBanner";
 
 /* ─────────────────────────────────────────────────────────
    MOTION VARIANTS — subtle, fast, no bounce
@@ -1123,6 +1124,7 @@ export default function App() {
           </div>
         </div>
       </footer>
+      <CookieBanner />
     </div>
   );
 }

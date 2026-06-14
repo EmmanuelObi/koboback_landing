@@ -132,7 +132,7 @@ export function exportReportAsPdf(report: AuditReport): void {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   const accentH = 2.5;
-  const logoH = 7.5;
+  const logoH = 11;
   const logoW = logoH * LOGO_ASPECT;
   const metaLabelW = 24;
   const metaPad = 5;
@@ -153,7 +153,7 @@ export function exportReportAsPdf(report: AuditReport): void {
 
   const metaPanelH = metaPad * 2 + metaRows.length * metaRowH;
   const headerTop = 10;
-  const titleY = headerTop + logoH + 9;
+  const titleY = headerTop + logoH + 10;
   const ruleY = titleY + 4;
   const metaPanelY = ruleY + 5;
   const headerH = metaPanelY + metaPanelH + 6;

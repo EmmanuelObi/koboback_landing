@@ -1,24 +1,25 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getCookieConsent,
+  isPublicCookieBannerPath,
   setCookieConsent,
   type CookieConsent,
 } from "../lib/cookieConsent";
 
 export default function CookieBanner() {
-  const [visible, setVisible] = useState(false);
+  const { pathname } = useLocation();
+  const [consent, setConsent] = useState<CookieConsent | null>(() =>
+    getCookieConsent(),
+  );
 
-  useEffect(() => {
-    if (getCookieConsent() === null) {
-      setVisible(true);
-    }
-  }, []);
+  const visible =
+    consent === null && isPublicCookieBannerPath(pathname);
 
-  function saveChoice(consent: CookieConsent) {
-    setCookieConsent(consent);
-    setVisible(false);
+  function saveChoice(choice: CookieConsent) {
+    setCookieConsent(choice);
+    setConsent(choice);
   }
 
   return (

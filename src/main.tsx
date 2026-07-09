@@ -15,6 +15,7 @@ import StatementsPage from "./product/pages/StatementsPage.tsx";
 import AuditJobPage from "./product/pages/AuditJobPage.tsx";
 import ReportPage from "./product/pages/ReportPage.tsx";
 import CookieBanner from "./components/CookieBanner.tsx";
+import VercelAnalytics from "./components/VercelAnalytics.tsx";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -81,6 +82,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           />
         </Routes>
         <CookieBanner />
+        <VercelAnalytics />
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>,

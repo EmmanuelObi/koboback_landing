@@ -1,6 +1,7 @@
 export type CookieConsent = "accepted" | "rejected";
 
 const STORAGE_KEY = "koboback_cookie_consent";
+export const COOKIE_CONSENT_CHANGE_EVENT = "koboback:cookie-consent-change";
 
 /** Routes where the cookie banner is shown before consent is stored. */
 export const PUBLIC_COOKIE_BANNER_PATHS = [
@@ -29,6 +30,9 @@ export function getCookieConsent(): CookieConsent | null {
 export function setCookieConsent(consent: CookieConsent): void {
   try {
     localStorage.setItem(STORAGE_KEY, consent);
+    window.dispatchEvent(
+      new CustomEvent(COOKIE_CONSENT_CHANGE_EVENT, { detail: consent }),
+    );
   } catch {
     // Ignore quota / private-mode errors.
   }

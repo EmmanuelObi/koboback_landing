@@ -106,6 +106,11 @@ const steps = [
 
 const trustPoints = [
   {
+    icon: BadgeCheck,
+    title: "NITDA labelled startup",
+    desc: "Recognised by Nigeria's National Information Technology Development Agency — an independent signal that KoboBack meets national standards for Nigerian tech startups.",
+  },
+  {
     icon: ShieldCheck,
     title: "Built for consumers, not banks",
     desc: "Every tool in this space is sold to banks. KoboBack works exclusively for account holders.",
@@ -119,11 +124,6 @@ const trustPoints = [
     icon: Banknote,
     title: "Transparent pricing",
     desc: "Scan for free. Pay ₦2,000 for a full audit report. Opt into managed recovery for 20% of what we get back — nothing more.",
-  },
-  {
-    icon: BadgeCheck,
-    title: "Full transparency",
-    desc: "You see exactly what we flagged, why it was flagged, and how we arrived at the recovery estimate.",
   },
 ];
 
@@ -419,8 +419,8 @@ export default function App() {
 
             {/* Trust line */}
             <p className="mt-8 text-[12px] text-slate-400">
-              Private by default · No bank login required · Free to scan · Paid
-              audit & recovery options available
+              Private by default · No bank login required · NITDA labelled
+              startup · Free to scan
             </p>
           </motion.div>
         </motion.div>
@@ -1118,6 +1118,8 @@ export default function App() {
           <div className="mt-10 pt-6 border-t border-brand/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-slate-400">
             <p>
               &copy; {new Date().getFullYear()} KoboBack. All rights reserved.
+              {" · "}
+              NITDA labelled startup
             </p>
             <p>Not affiliated with any bank or financial institution.</p>
           </div>

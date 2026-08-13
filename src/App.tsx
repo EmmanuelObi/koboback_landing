@@ -292,16 +292,16 @@ export default function App() {
           {/* Desktop CTAs */}
           <div className="hidden md:flex items-center gap-2">
             <Link
-              to="/product"
-              className="inline-flex items-center h-8 px-4 rounded-md border border-brand/20 text-slate-700 text-[13px] font-medium hover:border-brand/40 hover:text-brand-dark transition-colors"
-            >
-              Start audit
-            </Link>
-            <Link
               to="/waitlist"
               className="inline-flex items-center gap-1.5 h-8 px-4 rounded-md bg-brand text-white text-[13px] font-medium hover:bg-brand-dark transition-colors"
             >
               Join waitlist
+            </Link>
+            <Link
+              to="/product"
+              className="inline-flex items-center h-8 px-4 rounded-md border border-brand/20 text-slate-700 text-[13px] font-medium hover:border-brand/40 hover:text-brand-dark transition-colors"
+            >
+              Start audit
             </Link>
           </div>
 
@@ -341,18 +341,18 @@ export default function App() {
                   </a>
                 ))}
                 <Link
-                  to="/product"
-                  onClick={() => setMobileOpen(false)}
-                  className="mt-2 inline-flex items-center justify-center h-9 px-4 rounded-md border border-brand/20 text-slate-700 text-[13px] font-medium"
-                >
-                  Start audit
-                </Link>
-                <Link
                   to="/waitlist"
                   onClick={() => setMobileOpen(false)}
-                  className="inline-flex items-center justify-center h-9 px-4 rounded-md bg-brand text-white text-[13px] font-medium"
+                  className="mt-2 inline-flex items-center justify-center h-9 px-4 rounded-md bg-brand text-white text-[13px] font-medium"
                 >
                   Join waitlist
+                </Link>
+                <Link
+                  to="/product"
+                  onClick={() => setMobileOpen(false)}
+                  className="inline-flex items-center justify-center h-9 px-4 rounded-md border border-brand/20 text-slate-700 text-[13px] font-medium"
+                >
+                  Start audit
                 </Link>
               </div>
             </motion.div>
@@ -404,16 +404,16 @@ export default function App() {
             {/* CTAs */}
             <div className="mt-10 flex flex-col sm:flex-row items-start gap-3">
               <Link
-                to="/product"
+                to="/waitlist"
                 className="inline-flex items-center gap-2 h-11 px-5 rounded-md bg-brand text-white text-[14px] font-medium hover:bg-brand-dark transition-colors"
               >
-                Start your audit <ArrowRight className="h-4 w-4" />
+                Join the waitlist <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                to="/waitlist"
+                to="/product"
                 className="inline-flex items-center gap-2 h-11 px-5 rounded-md border border-brand/20 text-slate-600 text-[14px] font-medium hover:border-brand/40 hover:text-brand-dark transition-colors"
               >
-                Join the waitlist
+                Start your audit
               </Link>
             </div>
 

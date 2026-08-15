@@ -100,7 +100,7 @@ export default function ProductAuth() {
         {tab === "signin" ? "Sign in to KoboBack" : "Create your account"}
       </h1>
       <p className={cn(pageDescClass, "mt-2 mb-8")}>
-        Upload statements, track audits, and recover unfair bank fees.
+        Upload statements, track audits, and Learn about your unfair bank fees.
       </p>
 
       <div className="flex mb-6 border-b border-slate-200">

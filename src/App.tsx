@@ -96,12 +96,12 @@ const steps = [
     title: "See what you may be owed",
     desc: "A clear, itemised report shows you exactly which transactions look wrong and the total at stake.",
   },
-  {
-    icon: Banknote,
-    number: "04",
-    title: "We help you recover it",
-    desc: "KoboBack guides you through the dispute process. We charge a fee only when you actually recover money.",
-  },
+  // {
+  //   icon: Banknote,
+  //   number: "04",
+  //   title: "We help you recover it",
+  //   desc: "KoboBack guides you through the dispute process. We charge a fee only when you actually recover money.",
+  // },
 ];
 
 const trustPoints = [
@@ -123,8 +123,9 @@ const trustPoints = [
   {
     icon: Banknote,
     title: "Transparent pricing",
-    desc: "Scan for free. Pay ₦2,000 for a full audit report. Opt into managed recovery for 20% of what we get back — nothing more.",
+    desc: "Scan for free. Pay ₦2,000 for a full audit report.",
   },
+  //  Opt into managed recovery for 20% of what we get back — nothing more.
 ];
 
 const differentiators = [
@@ -176,8 +177,9 @@ const faqs = [
   },
   {
     q: "How does KoboBack make money?",
-    a: "Scanning is free. A full audit report costs ₦2,000 — you get a detailed breakdown of every error and a dispute letter. If you want us to handle the recovery process for you, we charge 20% of the amount successfully recovered. No recovery, no fee on that tier.",
+    a: "Scanning is free. A full audit report costs ₦2,000 — you get a detailed breakdown of every error and a dispute letter.",
   },
+  // If you want us to handle the recovery process for you, we charge 20% of the amount successfully recovered. No recovery, no fee on that tier.
   {
     q: "What if no errors are found in my statement?",
     a: "That's a good outcome. It means your bank has treated you fairly on this statement. You owe us nothing and we'll tell you clearly.",
@@ -208,7 +210,9 @@ function FAQItem({ q, a }: { q: string; a: string }) {
         </span>
         <ChevronRight
           className={`h-4 w-4 flex-shrink-0 transition-transform duration-200 ${
-            open ? "rotate-90 text-brand" : "text-brand/40 group-hover:text-brand"
+            open
+              ? "rotate-90 text-brand"
+              : "text-brand/40 group-hover:text-brand"
           }`}
         />
       </button>
@@ -389,9 +393,7 @@ export default function App() {
             <h1 className="text-[40px] md:text-[52px] font-bold text-slate-950 leading-[1.12] tracking-[-0.02em]">
               Your bank may owe you money.
               <br />
-              <span className="text-brand/50">
-                Most people never find out.
-              </span>
+              <span className="text-brand/50">Most people never find out.</span>
             </h1>
 
             {/* Sub-headline */}
@@ -468,10 +470,7 @@ export default function App() {
       {/* ══════════════════════════════════════════════
           PROBLEM SECTION
       ══════════════════════════════════════════════ */}
-      <section
-        id="problem"
-        className="py-24 bg-white border-b border-brand/10"
-      >
+      <section id="problem" className="py-24 bg-white border-b border-brand/10">
         <div className="max-w-[1100px] mx-auto px-6">
           <motion.div
             initial="hidden"
@@ -559,7 +558,7 @@ export default function App() {
               How it works
             </p>
             <h2 className="text-[30px] md:text-[36px] font-bold text-slate-950 leading-[1.2] tracking-[-0.02em]">
-              Four steps to get your money back
+              Three steps to get your money back
             </h2>
             <p className="mt-4 text-[15px] text-slate-500 leading-relaxed">
               No technical knowledge needed. No account linking. Just your bank
@@ -567,7 +566,7 @@ export default function App() {
             </p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {steps.map((s, i) => (
               <motion.div
                 key={s.number}
@@ -775,10 +774,7 @@ export default function App() {
       {/* ══════════════════════════════════════════════
           PRICING
       ══════════════════════════════════════════════ */}
-      <section
-        id="pricing"
-        className="py-24 bg-white border-b border-brand/10"
-      >
+      <section id="pricing" className="py-24 bg-white border-b border-brand/10">
         <div className="max-w-[1100px] mx-auto px-6">
           <motion.div
             initial="hidden"
@@ -794,13 +790,11 @@ export default function App() {
             <h2 className="text-[30px] md:text-[36px] font-bold text-slate-950 leading-[1.2] tracking-[-0.02em]">
               Simple, transparent pricing.
               <br />
-              <span className="text-brand/60">
-                Pay only for what you need.
-              </span>
+              <span className="text-brand/60">Pay only for what you need.</span>
             </h2>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 gap-6">
             {/* Tier 1 — Free scan */}
             <motion.div
               initial="hidden"
@@ -901,7 +895,7 @@ export default function App() {
               </Link>
             </motion.div>
 
-            {/* Tier 3 — Recovery */}
+            {/* Tier 3 — Recovery
             <motion.div
               initial="hidden"
               whileInView="visible"
@@ -949,7 +943,7 @@ export default function App() {
               >
                 Get early access
               </Link>
-            </motion.div>
+            </motion.div> */}
           </div>
         </div>
       </section>

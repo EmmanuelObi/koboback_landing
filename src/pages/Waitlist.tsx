@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import Logo from "../components/Logo";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,35 +8,20 @@ const AIRTABLE_BASE = import.meta.env.VITE_AIRTABLE_BASE as string;
 const AIRTABLE_TABLE = import.meta.env.VITE_AIRTABLE_TABLE as string;
 const AIRTABLE_TOKEN = import.meta.env.VITE_AIRTABLE_TOKEN as string;
 
-const NIGERIAN_BANKS = [
-  "Access Bank",
-  "Citibank Nigeria",
-  "Ecobank Nigeria",
-  "Fidelity Bank",
-  "First Bank of Nigeria",
-  "First City Monument Bank (FCMB)",
-  "Globus Bank",
-  "Guaranty Trust Bank (GTBank)",
-  "Heritage Bank",
-  "Jaiz Bank",
-  "Keystone Bank",
-  "Kuda Bank",
-  "Moniepoint",
-  "OPay",
-  "PalmPay",
-  "Polaris Bank",
-  "Providus Bank",
-  "Stanbic IBTC Bank",
-  "Standard Chartered Bank Nigeria",
-  "Sterling Bank",
-  "SunTrust Bank",
-  "Titan Trust Bank",
-  "Union Bank of Nigeria",
-  "United Bank for Africa (UBA)",
-  "Unity Bank",
-  "VFD Microfinance Bank",
-  "Wema Bank",
-  "Zenith Bank",
+const LAST_NOTICED_OPTIONS = [
+  { value: "this_week", label: "This week" },
+  { value: "this_month", label: "This month" },
+  { value: "last_3_months", label: "In the last 3 months" },
+  { value: "over_6_months", label: "More than 6 months ago" },
+  { value: "not_recently", label: "I haven't noticed any recently" },
+];
+
+const FREQUENCY_OPTIONS = [
+  { value: "weekly_or_more", label: "Weekly or more often" },
+  { value: "monthly", label: "About once a month" },
+  { value: "every_few_months", label: "Every few months" },
+  { value: "rarely", label: "Rarely" },
+  { value: "not_sure", label: "I'm not sure" },
 ];
 
 const fade = {
@@ -49,13 +34,54 @@ const fade = {
   exit: { opacity: 0, y: -8, transition: { duration: 0.2, ease: "easeIn" } },
 };
 
+const inputClass =
+  "w-full px-4 rounded-md border border-slate-200 text-[14px] text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition";
+
 interface FormData {
   name: string;
   email: string;
-  bank: string;
-  monthlyTransactions: string;
-  noticedCharge: string;
-  willingToPay: string;
+  whyProblem: string;
+  lastNoticed: string;
+  frequency: string;
+  whatDone: string;
+  anythingElse: string;
+}
+
+function RadioGroup({
+  name,
+  value,
+  options,
+  onChange,
+}: {
+  name: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="space-y-2.5">
+      {options.map((opt) => (
+        <label
+          key={opt.value}
+          className={`flex items-center gap-3 p-3.5 rounded-lg border cursor-pointer transition-colors ${
+            value === opt.value
+              ? "border-brand bg-brand-muted"
+              : "border-slate-200 hover:border-slate-300"
+          }`}
+        >
+          <input
+            type="radio"
+            name={name}
+            value={opt.value}
+            checked={value === opt.value}
+            onChange={(e) => onChange(e.target.value)}
+            className="accent-brand"
+          />
+          <span className="text-[14px] text-slate-700">{opt.label}</span>
+        </label>
+      ))}
+    </div>
+  );
 }
 
 export default function Waitlist() {
@@ -69,10 +95,11 @@ export default function Waitlist() {
   const [form, setForm] = useState<FormData>({
     name: "",
     email: "",
-    bank: "",
-    monthlyTransactions: "",
-    noticedCharge: "",
-    willingToPay: "",
+    whyProblem: "",
+    lastNoticed: "",
+    frequency: "",
+    whatDone: "",
+    anythingElse: "",
   });
 
   const set = (key: keyof FormData, value: string) => {
@@ -92,26 +119,22 @@ export default function Waitlist() {
       }
     }
     if (step === 2) {
-      if (!form.bank) {
-        setFieldError("Please select your primary bank.");
+      if (!form.whyProblem.trim()) {
+        setFieldError("Please tell us why bank charges and errors matter to you.");
         return false;
       }
-      if (!form.monthlyTransactions) {
-        setFieldError(
-          "Please select your approximate monthly transaction count.",
-        );
+      if (!form.lastNoticed) {
+        setFieldError("Please select when you last noticed these deductions.");
         return false;
       }
     }
     if (step === 3) {
-      if (!form.noticedCharge) {
-        setFieldError("Please answer the question about unexpected charges.");
+      if (!form.frequency) {
+        setFieldError("Please select how frequently you get these deductions.");
         return false;
       }
-      if (!form.willingToPay) {
-        setFieldError(
-          "Please let us know if you'd be willing to pay for an audit.",
-        );
+      if (!form.whatDone.trim()) {
+        setFieldError("Please tell us what you've done about it so far.");
         return false;
       }
     }
@@ -128,6 +151,11 @@ export default function Waitlist() {
     setFieldError("");
     setStep((s) => s - 1);
   };
+
+  const labelFor = (
+    options: { value: string; label: string }[],
+    value: string,
+  ) => options.find((o) => o.value === value)?.label ?? value;
 
   const submit = async () => {
     if (!validateStep()) return;
@@ -147,11 +175,17 @@ export default function Waitlist() {
             fields: {
               Name: form.name,
               Email: form.email,
-              Bank: form.bank,
-              "Number of Monthly Transactions": form.monthlyTransactions,
-              "Noticed any unexpected charges": form.noticedCharge,
-              "Are you willing to pay 2000 Naira for an Audit":
-                form.willingToPay,
+              "Why is Bank Charges and Errors a big problem for you?":
+                form.whyProblem,
+              "When was the last time you noticed these deductions?":
+                labelFor(LAST_NOTICED_OPTIONS, form.lastNoticed),
+              "How frequently do you get them?": labelFor(
+                FREQUENCY_OPTIONS,
+                form.frequency,
+              ),
+              "What have you done about it?": form.whatDone,
+              "Anything else you want us to know?":
+                form.anythingElse.trim() || undefined,
             },
           }),
         },
@@ -177,9 +211,31 @@ export default function Waitlist() {
 
   const TOTAL_STEPS = 3;
 
+  const navButtons = (onPrimary: () => void, primaryLabel: ReactNode) => (
+    <div className="mt-6 flex gap-3">
+      <button
+        onClick={back}
+        disabled={status === "loading"}
+        className="h-11 px-4 rounded-md border border-slate-200 text-slate-600 text-[14px] font-medium hover:border-slate-300 hover:text-slate-900 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
+      <button
+        onClick={onPrimary}
+        disabled={status === "loading"}
+        className="flex-1 h-11 rounded-md bg-brand text-white text-[14px] font-medium hover:bg-brand-dark transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+      >
+        {status === "loading" ? (
+          <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+        ) : (
+          primaryLabel
+        )}
+      </button>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-white text-slate-900 antialiased flex flex-col">
-      {/* Navbar */}
       <header className="fixed inset-x-0 top-0 z-50 bg-white border-b border-slate-200">
         <div className="max-w-[1100px] mx-auto px-6 h-14 flex items-center justify-between">
           <Logo to="/" size="md" />
@@ -192,7 +248,6 @@ export default function Waitlist() {
         </div>
       </header>
 
-      {/* Main */}
       <main className="flex-1 flex items-start justify-center pt-28 pb-24 px-6">
         <div className="w-full max-w-[520px]">
           {status === "success" ? (
@@ -223,7 +278,6 @@ export default function Waitlist() {
             </motion.div>
           ) : (
             <>
-              {/* Progress */}
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[12px] font-medium text-slate-400">
@@ -242,7 +296,6 @@ export default function Waitlist() {
                 </div>
               </div>
 
-              {/* Step content */}
               <AnimatePresence mode="wait">
                 {step === 1 && (
                   <motion.div
@@ -272,7 +325,7 @@ export default function Waitlist() {
                       onChange={(e) => set("name", e.target.value)}
                       placeholder="Ada Okonkwo"
                       autoFocus
-                      className="w-full h-11 px-4 rounded-md border border-slate-200 text-[14px] text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition"
+                      className={`${inputClass} h-11`}
                     />
 
                     <label className="block mt-4 mb-1.5 text-[13px] font-medium text-slate-700">
@@ -284,7 +337,7 @@ export default function Waitlist() {
                       onChange={(e) => set("email", e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && next()}
                       placeholder="you@example.com"
-                      className="w-full h-11 px-4 rounded-md border border-slate-200 text-[14px] text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition"
+                      className={`${inputClass} h-11`}
                     />
 
                     {fieldError && (
@@ -329,67 +382,33 @@ export default function Waitlist() {
                     exit="exit"
                   >
                     <h2 className="text-[26px] md:text-[30px] font-bold text-slate-950 leading-[1.2] tracking-[-0.02em] mb-1">
-                      About your banking
+                      Your experience
                     </h2>
                     <p className="text-[14px] text-slate-500 mb-8">
-                      This helps us prioritise the banks we analyse first.
+                      Help us understand the problem you're facing.
                     </p>
 
-                    {/* Bank select */}
                     <label className="block mb-1.5 text-[13px] font-medium text-slate-700">
-                      Primary bank
+                      Why is Bank Charges and Errors a big problem for you?
                     </label>
-                    <select
-                      value={form.bank}
-                      onChange={(e) => set("bank", e.target.value)}
-                      className="w-full h-11 px-3 rounded-md border border-slate-200 text-[14px] text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition appearance-none"
-                    >
-                      <option value="" disabled>
-                        Select your bank…
-                      </option>
-                      {NIGERIAN_BANKS.map((b) => (
-                        <option key={b} value={b}>
-                          {b}
-                        </option>
-                      ))}
-                    </select>
+                    <textarea
+                      value={form.whyProblem}
+                      onChange={(e) => set("whyProblem", e.target.value)}
+                      placeholder="Tell us how unexpected charges or errors have affected you…"
+                      rows={4}
+                      className={`${inputClass} py-3 resize-none`}
+                    />
 
-                    {/* Monthly transactions */}
                     <fieldset className="mt-6">
                       <legend className="text-[13px] font-medium text-slate-700 mb-3">
-                        Approximate monthly transactions
+                        When was the last time you noticed these deductions?
                       </legend>
-                      <div className="space-y-2.5">
-                        {[
-                          { value: "less_than_50", label: "Fewer than 50" },
-                          { value: "50_to_200", label: "50 – 200" },
-                          { value: "200_to_500", label: "200 – 500" },
-                          { value: "above_500", label: "Above 500" },
-                        ].map((opt) => (
-                          <label
-                            key={opt.value}
-                            className={`flex items-center gap-3 p-3.5 rounded-lg border cursor-pointer transition-colors ${
-                              form.monthlyTransactions === opt.value
-                                ? "border-brand bg-brand-muted"
-                                : "border-slate-200 hover:border-slate-300"
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="monthlyTransactions"
-                              value={opt.value}
-                              checked={form.monthlyTransactions === opt.value}
-                              onChange={(e) =>
-                                set("monthlyTransactions", e.target.value)
-                              }
-                              className="accent-brand"
-                            />
-                            <span className="text-[14px] text-slate-700">
-                              {opt.label}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
+                      <RadioGroup
+                        name="lastNoticed"
+                        value={form.lastNoticed}
+                        options={LAST_NOTICED_OPTIONS}
+                        onChange={(v) => set("lastNoticed", v)}
+                      />
                     </fieldset>
 
                     {fieldError && (
@@ -398,20 +417,12 @@ export default function Waitlist() {
                       </p>
                     )}
 
-                    <div className="mt-6 flex gap-3">
-                      <button
-                        onClick={back}
-                        className="h-11 px-4 rounded-md border border-slate-200 text-slate-600 text-[14px] font-medium hover:border-slate-300 hover:text-slate-900 transition-colors flex items-center gap-1.5"
-                      >
-                        <ArrowLeft className="h-4 w-4" /> Back
-                      </button>
-                      <button
-                        onClick={next}
-                        className="flex-1 h-11 rounded-md bg-brand text-white text-[14px] font-medium hover:bg-brand-dark transition-colors flex items-center justify-center gap-2"
-                      >
+                    {navButtons(
+                      next,
+                      <>
                         Continue <ArrowRight className="h-4 w-4" />
-                      </button>
-                    </div>
+                      </>,
+                    )}
                   </motion.div>
                 )}
 
@@ -424,99 +435,48 @@ export default function Waitlist() {
                     exit="exit"
                   >
                     <h2 className="text-[26px] md:text-[30px] font-bold text-slate-950 leading-[1.2] tracking-[-0.02em] mb-1">
-                      One more thing
+                      Almost done
                     </h2>
                     <p className="text-[14px] text-slate-500 mb-8">
-                      Honest answers help us understand how to serve you best.
+                      A few more details and you're on the list.
                     </p>
 
-                    {/* Noticed unexpected charge */}
                     <fieldset className="mb-6">
                       <legend className="text-[13px] font-medium text-slate-700 mb-3">
-                        Have you ever noticed an unexpected charge or deduction
-                        on your bank statement?
+                        How frequently do you get them?
                       </legend>
-                      <div className="space-y-2.5">
-                        {[
-                          {
-                            value: "yes",
-                            label: "Yes — I've seen something suspicious",
-                          },
-                          {
-                            value: "not_sure",
-                            label: "Not sure — I don't always check",
-                          },
-                          { value: "no", label: "No — everything looks fine" },
-                        ].map((opt) => (
-                          <label
-                            key={opt.value}
-                            className={`flex items-center gap-3 p-3.5 rounded-lg border cursor-pointer transition-colors ${
-                              form.noticedCharge === opt.value
-                                ? "border-brand bg-brand-muted"
-                                : "border-slate-200 hover:border-slate-300"
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="noticedCharge"
-                              value={opt.value}
-                              checked={form.noticedCharge === opt.value}
-                              onChange={(e) =>
-                                set("noticedCharge", e.target.value)
-                              }
-                              className="accent-brand"
-                            />
-                            <span className="text-[14px] text-slate-700">
-                              {opt.label}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
+                      <RadioGroup
+                        name="frequency"
+                        value={form.frequency}
+                        options={FREQUENCY_OPTIONS}
+                        onChange={(v) => set("frequency", v)}
+                      />
                     </fieldset>
 
-                    {/* Willing to pay */}
-                    <fieldset>
-                      <legend className="text-[13px] font-medium text-slate-700 mb-3">
-                        Would you pay ₦2,000 for a detailed AI audit of your
-                        bank statement?
-                      </legend>
-                      <div className="space-y-2.5">
-                        {[
-                          {
-                            value: "yes",
-                            label: "Yes — that's fair for what it offers",
-                          },
-                          {
-                            value: "maybe",
-                            label: "Maybe — depends on what's found",
-                          },
-                          { value: "no", label: "No — I'd need it to be free" },
-                        ].map((opt) => (
-                          <label
-                            key={opt.value}
-                            className={`flex items-center gap-3 p-3.5 rounded-lg border cursor-pointer transition-colors ${
-                              form.willingToPay === opt.value
-                                ? "border-brand bg-brand-muted"
-                                : "border-slate-200 hover:border-slate-300"
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="willingToPay"
-                              value={opt.value}
-                              checked={form.willingToPay === opt.value}
-                              onChange={(e) =>
-                                set("willingToPay", e.target.value)
-                              }
-                              className="accent-brand"
-                            />
-                            <span className="text-[14px] text-slate-700">
-                              {opt.label}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    </fieldset>
+                    <label className="block mb-1.5 text-[13px] font-medium text-slate-700">
+                      What have you done about it?
+                    </label>
+                    <textarea
+                      value={form.whatDone}
+                      onChange={(e) => set("whatDone", e.target.value)}
+                      placeholder="e.g. visited a branch, called customer care, ignored it…"
+                      rows={3}
+                      className={`${inputClass} py-3 resize-none mb-6`}
+                    />
+
+                    <label className="block mb-1.5 text-[13px] font-medium text-slate-700">
+                      Anything else you want us to know?{" "}
+                      <span className="font-normal text-slate-400">
+                        (optional)
+                      </span>
+                    </label>
+                    <textarea
+                      value={form.anythingElse}
+                      onChange={(e) => set("anythingElse", e.target.value)}
+                      placeholder="Anything we should keep in mind…"
+                      rows={3}
+                      className={`${inputClass} py-3 resize-none`}
+                    />
 
                     {fieldError && (
                       <p className="mt-3 text-[12px] text-red-500">
@@ -530,28 +490,12 @@ export default function Waitlist() {
                       </p>
                     )}
 
-                    <div className="mt-6 flex gap-3">
-                      <button
-                        onClick={back}
-                        disabled={status === "loading"}
-                        className="h-11 px-4 rounded-md border border-slate-200 text-slate-600 text-[14px] font-medium hover:border-slate-300 hover:text-slate-900 transition-colors flex items-center gap-1.5 disabled:opacity-50"
-                      >
-                        <ArrowLeft className="h-4 w-4" /> Back
-                      </button>
-                      <button
-                        onClick={submit}
-                        disabled={status === "loading"}
-                        className="flex-1 h-11 rounded-md bg-brand text-white text-[14px] font-medium hover:bg-brand-dark transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                      >
-                        {status === "loading" ? (
-                          <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                        ) : (
-                          <>
-                            Join the waitlist <ArrowRight className="h-4 w-4" />
-                          </>
-                        )}
-                      </button>
-                    </div>
+                    {navButtons(
+                      submit,
+                      <>
+                        Join the waitlist <ArrowRight className="h-4 w-4" />
+                      </>,
+                    )}
 
                     <p className="mt-4 text-[12px] text-slate-400 text-center">
                       No spam. No sharing. Unsubscribe anytime.

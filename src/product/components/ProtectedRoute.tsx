@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { Loader2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import AuthLoadingScreen from "../ui/AuthLoadingScreen";
 
 export default function ProtectedRoute({
   children,
@@ -15,12 +15,7 @@ export default function ProtectedRoute({
   const isOnboardingRoute = location.pathname === "/product/onboarding";
 
   if (loading || (isConfigured && user && profileLoading)) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-3">
-        <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
-        <p className="text-[13px] text-slate-500">Loading…</p>
-      </div>
-    );
+    return <AuthLoadingScreen message="Loading your workspace…" />;
   }
 
   if (!isConfigured) {
@@ -36,7 +31,7 @@ export default function ProtectedRoute({
   }
 
   if (onboardingComplete && isOnboardingRoute) {
-    return <Navigate to="/product/dashboard" replace />;
+    return <Navigate to="/product/statements" replace />;
   }
 
   return <>{children}</>;

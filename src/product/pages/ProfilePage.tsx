@@ -9,6 +9,7 @@ import Button from "../ui/Button";
 import Input from "../ui/Input";
 import ProfileForm, { type ProfileFormValues } from "../components/ProfileForm";
 import { upsertProfile } from "../lib/profile";
+import { humanizeAuthError } from "../lib/authErrors";
 import { labelClass } from "../ui/tokens";
 
 export default function ProfilePage() {
@@ -24,9 +25,10 @@ export default function ProfilePage() {
     if (!user) throw new Error("Not signed in.");
     await upsertProfile(user.id, {
       full_name: values.full_name,
-      phone: values.phone,
+      phone: values.phone || null,
       company: values.company || null,
-      primary_bank: values.primary_bank,
+      primary_bank: values.primary_bank || null,
+      account_type: values.account_type || null,
       referral_source: values.referral_source || null,
       onboarding_completed_at:
         profile?.onboarding_completed_at ?? new Date().toISOString(),
@@ -57,7 +59,7 @@ export default function ProfilePage() {
     setSavingPassword(false);
 
     if (error) {
-      setPasswordError(error.message);
+      setPasswordError(humanizeAuthError(error.message));
       return;
     }
 

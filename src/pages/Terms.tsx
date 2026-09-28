@@ -115,19 +115,20 @@ export default function Terms() {
       <Section title="5. Fees and Payment Terms">
         <SubSection title="5.1 Free Scan">
           <P>
-            KoboBack offers a basic free scan of your bank statement, which
-            provides a summary-level overview of potential issues detected. No
-            payment is required for this tier.
+            KoboBack offers a free fee-line scan of your bank statement: a
+            count of fee-like lines by type. It does not include amounts,
+            verdicts, or a dispute letter. No payment is required for this
+            scan.
           </P>
         </SubSection>
 
         <SubSection title="5.2 Paid Audit">
           <P>
             A detailed audit report, including itemised findings, error
-            classifications, and a full estimated recovery breakdown, is
-            available as a paid feature. The current fee for a paid audit is
-            displayed on our pricing page and is subject to change. Fees are
-            charged at the time of requesting the detailed report.
+            classifications, and a ready-to-send dispute letter, is available
+            as a one-time paid feature per statement. The current fee is
+            displayed on our pricing page and is subject to change. Payment is
+            collected before the full audit runs.
           </P>
         </SubSection>
 

@@ -9,7 +9,7 @@ export const selectClass =
 export const labelClass = "block mb-1.5 text-[13px] font-medium text-slate-700";
 
 export const cardClass =
-  "bg-white border border-slate-200 rounded-lg";
+  "bg-white border border-slate-200/90 rounded-xl";
 
 export const pageTitleClass =
   "text-[26px] md:text-[30px] font-bold text-slate-950 leading-[1.2] tracking-[-0.02em]";

@@ -123,7 +123,7 @@ const trustPoints = [
   {
     icon: Banknote,
     title: "Transparent pricing",
-    desc: "Scan for free. Pay ₦2,000 for a full audit report.",
+    desc: "Free fee-line scan. Pay ₦2,000 once per statement for a full audit.",
   },
   //  Opt into managed recovery for 20% of what we get back — nothing more.
 ];
@@ -177,12 +177,12 @@ const faqs = [
   },
   {
     q: "How does KoboBack make money?",
-    a: "Scanning is free. A full audit report costs ₦2,000 — you get a detailed breakdown of every error and a dispute letter.",
+    a: "Upload and the fee-line scan are free. A full CBN audit report is ₦2,000 per statement, paid before the audit runs.",
   },
   // If you want us to handle the recovery process for you, we charge 20% of the amount successfully recovered. No recovery, no fee on that tier.
   {
     q: "What if no errors are found in my statement?",
-    a: "That's a good outcome. It means your bank has treated you fairly on this statement. You owe us nothing and we'll tell you clearly.",
+    a: "The free scan still shows how many fee-like lines we found. If that count is zero, we will not ask you to pay. If you run a paid audit and nothing is flagged, that is still a valid outcome — your bank treated this statement fairly.",
   },
   {
     q: "Do you work with the banks?",
@@ -461,7 +461,7 @@ export default function App() {
           <div className="sm:pl-10">
             <Stat
               value="₦2,000"
-              label="For a full audit — or 20% fee on managed recovery"
+              label="One-time, per statement, after a free fee-line scan"
             />
           </div>
         </motion.div>
@@ -812,17 +812,17 @@ export default function App() {
               </p>
               <p className="text-[13px] text-slate-400 mb-6">Always free</p>
               <p className="text-[15px] font-semibold text-slate-900 mb-2">
-                Statement scan
+                Fee-line scan
               </p>
               <p className="text-[13px] text-slate-500 leading-relaxed mb-8">
-                Upload your bank statement and get a high-level summary of
-                potential errors — how many were found and what type they are.
-                No cost, no card required.
+                Upload your bank statement. We count fee-like lines by type —
+                SMS, stamp duty, NIP, and so on. No amounts, no verdicts, no
+                card.
               </p>
               <ul className="mt-auto space-y-2.5">
                 {[
-                  "AI-powered error detection",
-                  'Summary report (e.g. "3 errors found")',
+                  "Fee-line inventory by type",
+                  "No amounts or overcharge claims",
                   "No bank login required",
                 ].map((f) => (
                   <li
@@ -970,8 +970,8 @@ export default function App() {
               with the bank.
             </h2>
             <p className="mt-4 text-[15px] text-slate-500 leading-relaxed">
-              Join the waitlist. Early members get priority access, a free first
-              statement scan, and preferred rates on audit and recovery.
+              Join the waitlist. Early members get priority access and a free
+              fee-line scan before the ₦2,000 full audit.
             </p>
 
             <Link

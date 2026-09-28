@@ -21,8 +21,8 @@ export default function FlaggedTransactions({
       <div className="text-center py-8 text-slate-500">
         <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
         <p>
-          No overcharges detected. Your bank fees appear compliant with CBN
-          regulations.
+          No potential overcharges were flagged. Reviewed fees appear consistent
+          with CBN guidance — confirm with your bank if anything looks unusual.
         </p>
       </div>
     );
@@ -43,12 +43,12 @@ export default function FlaggedTransactions({
           <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
           <span className="text-red-800 font-medium">
             {transactions.length} potential overcharge
-            {transactions.length !== 1 ? "s" : ""} detected
+            {transactions.length !== 1 ? "s" : ""} to review
           </span>
         </div>
         <div className="text-left sm:text-right">
           <p className="text-xs text-red-600 uppercase tracking-wider">
-            Est. Refund Owed
+            Est. potential amount
           </p>
           <p className="text-xl font-bold text-red-700">
             ₦
@@ -100,7 +100,7 @@ export default function FlaggedTransactions({
                 {tx.overcharge_amount != null && tx.overcharge_amount > 0 && (
                   <div className="text-right">
                     <span className="text-red-500 text-xs block">
-                      Overcharge
+                      Potential overcharge
                     </span>
                     <span className="font-mono font-bold text-red-600">
                       +₦
@@ -211,9 +211,8 @@ export default function FlaggedTransactions({
               </div>
             )}
 
-            {/* Violation reason */}
             <p className="text-sm text-slate-600">
-              <span className="font-medium text-orange-700">Violation:</span>{" "}
+              <span className="font-medium text-orange-700">Why it was flagged:</span>{" "}
               {tx.flag_reason}
             </p>
 
@@ -250,7 +249,7 @@ export default function FlaggedTransactions({
                   CBN Max
                 </th>
                 <th className="px-3 py-2 text-right font-semibold text-slate-600">
-                  Overcharge
+                  Potential overcharge
                 </th>
                 <th className="px-3 py-2 text-left font-semibold text-slate-600">
                   CBN Regulation
@@ -295,7 +294,7 @@ export default function FlaggedTransactions({
             <tfoot className="bg-slate-50">
               <tr>
                 <td colSpan={5} className="px-3 py-2 text-right font-semibold">
-                  Total Overcharge:
+                  Est. potential overcharge:
                 </td>
                 <td className="px-3 py-2 text-right font-mono font-bold text-red-600">
                   +₦

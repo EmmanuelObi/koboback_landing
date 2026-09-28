@@ -1,31 +1,37 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   FileText,
   Loader2,
   Search,
-  Trash2,
   Upload as UploadIcon,
   XCircle,
 } from "lucide-react";
 import FileDropzone from "../components/FileDropzone";
+import JobFlowStepper from "../components/JobFlowStepper";
 import ProductLayout from "../components/ProductLayout";
 import PageHeader from "../ui/PageHeader";
-import Card from "../ui/Card";
 import Badge from "../ui/Badge";
 import Button from "../ui/Button";
+import RowActions from "../ui/RowActions";
+import { StatementListSkeleton } from "../ui/Skeleton";
+import { useToast } from "../ui/Toast";
 import {
   deleteJob,
   listJobs,
-  startJobAudit,
   uploadStatement,
-  type JobStatus,
   type JobSummary,
 } from "../api/client";
 import {
-  isParsingInProgress,
+  isJobInProgress,
   isReadyToAudit,
+  canRetryAudit,
+  nextActionForJob,
+  statusLabel,
+  statusTone,
+  userFacingJobMessage,
+  validateStatementFile,
 } from "../lib/auditStatus";
 
 function parseApiError(err: unknown): string {
@@ -51,30 +57,9 @@ function formatDate(iso: string) {
   });
 }
 
-function statusTone(status: JobStatus): "blue" | "yellow" | "purple" | "green" | "red" | "neutral" {
-  if (status === "complete") return "green";
-  if (status === "failed") return "red";
-  if (status === "auditing") return "purple";
-  if (status === "parsed") return "green";
-  if (status === "parsing" || status === "uploaded") return "yellow";
-  return "blue";
-}
-
-function statusLabel(status: JobStatus): string {
-  const labels: Record<JobStatus, string> = {
-    awaiting_upload: "Uploading",
-    uploaded: "Queued",
-    parsing: "Extracting",
-    parsed: "Ready",
-    auditing: "Auditing",
-    complete: "Audited",
-    failed: "Failed",
-  };
-  return labels[status];
-}
-
 export default function StatementsPage() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [jobs, setJobs] = useState<JobSummary[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
@@ -82,6 +67,7 @@ export default function StatementsPage() {
   const [error, setError] = useState<string | null>(null);
   const [actionJobId, setActionJobId] = useState<string | null>(null);
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const uploadSectionRef = useRef<HTMLDivElement | null>(null);
 
   const loadJobs = useCallback(async () => {
     try {
@@ -99,7 +85,7 @@ export default function StatementsPage() {
     loadJobs();
   }, [loadJobs]);
 
-  const hasProcessing = jobs.some((j) => isParsingInProgress(j.status));
+  const hasProcessing = jobs.some((j) => isJobInProgress(j.status));
 
   useEffect(() => {
     if (!hasProcessing) {
@@ -122,37 +108,35 @@ export default function StatementsPage() {
     };
   }, [hasProcessing, loadJobs]);
 
-  const handleFileSelect = (f: File) => {
+  const handleFileSelect = (f: File | null) => {
     setFile(f);
-    setError(null);
+    if (f) setError(null);
   };
 
   const handleUpload = useCallback(async () => {
     if (!file) return;
+    const validationError = validateStatementFile(file);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     setUploading(true);
     setError(null);
 
     try {
-      await uploadStatement(file);
+      const uploaded = await uploadStatement(file);
       setFile(null);
-      await loadJobs();
+      toast("Statement uploaded — extracting transactions…", "success");
+      navigate(`/product/audit/${uploaded.job_id}`);
     } catch (err: unknown) {
       setError(parseApiError(err));
-    } finally {
       setUploading(false);
     }
-  }, [file, loadJobs]);
+  }, [file, navigate, toast]);
 
-  const handleAudit = async (jobId: string) => {
-    setActionJobId(jobId);
-    setError(null);
-    try {
-      await startJobAudit(jobId);
-      navigate(`/product/audit/${jobId}`);
-    } catch (err: unknown) {
-      setError(parseApiError(err));
-      setActionJobId(null);
-    }
+  const handleAudit = (jobId: string) => {
+    navigate(`/product/audit/${jobId}`);
   };
 
   const handleDelete = async (job: JobSummary) => {
@@ -169,11 +153,17 @@ export default function StatementsPage() {
     try {
       await deleteJob(job.job_id);
       setJobs((prev) => prev.filter((j) => j.job_id !== job.job_id));
+      toast("Statement deleted.", "success");
     } catch (err: unknown) {
       setError(parseApiError(err));
+      toast(parseApiError(err), "error");
     } finally {
       setActionJobId(null);
     }
+  };
+
+  const scrollToUpload = () => {
+    uploadSectionRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
@@ -182,17 +172,34 @@ export default function StatementsPage() {
         <PageHeader
           eyebrow="Statements"
           title="Your bank statements"
-          description="Upload statements first, then run a compliance audit when you're ready."
+          description="Upload a statement. A free scan counts fee-like lines. Pay ₦2,000 to run the full audit."
         />
 
-        <Card className="mb-8">
-          <h2 className="text-[14px] font-semibold text-slate-950 mb-4">
-            Upload a statement
-          </h2>
-          <FileDropzone onFileSelect={handleFileSelect} disabled={uploading} />
+        <JobFlowStepper status={null} className="mb-6" />
+
+        <section
+          ref={uploadSectionRef}
+          className="mb-10 rounded-xl border border-brand/15 bg-gradient-to-br from-brand-muted via-white to-white p-5 sm:p-6"
+        >
+          <div className="mb-4">
+            <h2 className="text-[15px] font-semibold text-slate-950">
+              Upload a statement
+            </h2>
+            <p className="text-[13px] text-slate-500 mt-1">
+              PDF, CSV, or Excel · max 10 MB. Extraction and a free fee-line
+              scan start automatically.
+            </p>
+          </div>
+
+          <FileDropzone
+            onFileSelect={handleFileSelect}
+            onValidationError={setError}
+            disabled={uploading}
+            selectedName={file?.name ?? null}
+          />
 
           {error && (
-            <div className="mt-4 text-[13px] text-red-600 bg-red-50 border border-red-200 rounded-md px-4 py-3 flex items-start gap-3">
+            <div className="mt-4 text-[13px] text-red-700 bg-red-50 border border-red-200 rounded-md px-4 py-3 flex items-start gap-3">
               <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <p>{error}</p>
             </div>
@@ -206,149 +213,166 @@ export default function StatementsPage() {
                 ) : (
                   <>
                     <UploadIcon className="w-4 h-4" />
-                    Upload statement
+                    Upload & continue
                   </>
                 )}
               </Button>
-              <p className="mt-2 text-[12px] text-slate-400 text-center">
-                Upload only — we extract transactions first. You choose when to
-                audit.
-              </p>
             </div>
           )}
-        </Card>
+        </section>
 
-        {loading && (
-          <div className="flex justify-center py-16">
-            <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
-          </div>
-        )}
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-[15px] font-semibold text-slate-950">
+            Uploaded statements
+          </h2>
+          {hasProcessing && (
+            <span className="text-[12px] text-slate-400 flex items-center gap-1.5">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              Updating…
+            </span>
+          )}
+        </div>
+
+        {loading && <StatementListSkeleton />}
 
         {!loading && jobs.length === 0 && (
-          <Card padding="lg" className="text-center">
-            <div className="mx-auto mb-5 h-12 w-12 rounded-full bg-brand-muted flex items-center justify-center">
-              <FileText className="w-6 h-6 text-brand" />
-            </div>
-            <h2 className="text-[18px] font-semibold text-slate-950 mb-2">
-              No statements yet
-            </h2>
-            <p className="text-[14px] text-slate-500 max-w-sm mx-auto">
-              Upload a PDF or CSV export from your bank. Once extracted, you can
-              run a CBN fee audit or delete the file.
-            </p>
-          </Card>
+          <p className="text-[13px] text-slate-500 py-6 text-center border border-dashed border-slate-200 rounded-xl bg-white/60">
+            No statements yet — use the upload area above to get started.
+          </p>
         )}
 
         {!loading && jobs.length > 0 && (
-          <Card padding="none" className="overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
-              <h2 className="text-[14px] font-semibold text-slate-950">
-                Uploaded statements
-              </h2>
-              {hasProcessing && (
-                <span className="text-[12px] text-slate-400 flex items-center gap-1.5">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Updating…
-                </span>
-              )}
-            </div>
-            <ul className="divide-y divide-slate-200">
-              {jobs.map((job) => {
-                const busy = actionJobId === job.job_id;
+          <ul className="space-y-2">
+            {jobs.map((job) => {
+              const busy = actionJobId === job.job_id;
+              const next = nextActionForJob(job);
 
-                return (
-                  <li key={job.job_id}>
-                    <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4">
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <div className="h-9 w-9 rounded-md bg-slate-100 flex items-center justify-center shrink-0">
-                          <FileText className="w-4 h-4 text-slate-500" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[14px] font-medium text-slate-950 truncate">
-                            {job.file_name}
-                          </p>
-                          <p className="text-[13px] text-slate-500 truncate">
-                            {job.bank_name ?? "Processing…"}
-                            {job.statement_period
-                              ? ` · ${job.statement_period}`
-                              : ""}
-                          </p>
-                          <p className="text-[12px] text-slate-400 mt-0.5">
-                            {formatDate(job.created_at)}
-                          </p>
-                        </div>
-                      </div>
+              let primary: ReactNode = null;
+              if (isReadyToAudit(job.status) && next) {
+                const shortLabel =
+                  next.label === "Pay to audit"
+                    ? "Pay"
+                    : next.label === "View scan"
+                      ? "Scan"
+                      : "Audit";
+                primary = (
+                  <Button
+                    size="sm"
+                    onClick={() => handleAudit(job.job_id)}
+                    disabled={busy}
+                  >
+                    {busy ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <>
+                        <Search className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">{next.label}</span>
+                        <span className="sm:hidden">{shortLabel}</span>
+                      </>
+                    )}
+                  </Button>
+                );
+              } else if (canRetryAudit(job)) {
+                primary = (
+                  <Button
+                    size="sm"
+                    onClick={() => handleAudit(job.job_id)}
+                    disabled={busy}
+                  >
+                    {busy ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <>
+                        <Search className="w-3.5 h-3.5" />
+                        Retry
+                      </>
+                    )}
+                  </Button>
+                );
+              } else if (job.status === "complete" && next) {
+                primary = (
+                  <Link to={next.to}>
+                    <Button size="sm" variant="secondary">
+                      Report
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Button>
+                  </Link>
+                );
+              } else if (isJobInProgress(job.status) && next) {
+                primary = (
+                  <Link to={next.to}>
+                    <Button size="sm" variant="secondary">
+                      Progress
+                    </Button>
+                  </Link>
+                );
+              } else if (job.status === "failed") {
+                primary = (
+                  <Button size="sm" onClick={scrollToUpload}>
+                    <UploadIcon className="w-3.5 h-3.5" />
+                    Re-upload
+                  </Button>
+                );
+              }
 
-                      <div className="flex items-center gap-3 shrink-0 pl-12 sm:pl-0">
+              const secondary = !isJobInProgress(job.status)
+                ? [
+                    {
+                      label: "Delete",
+                      danger: true,
+                      disabled: busy,
+                      onClick: () => void handleDelete(job),
+                    },
+                  ]
+                : [];
+
+              return (
+                <li
+                  key={job.job_id}
+                  className="rounded-xl border border-slate-200/90 bg-white px-4 py-3.5 sm:px-5 hover:border-slate-300 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-lg bg-brand-muted/80 border border-brand/10 flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4 text-brand-dark" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-[14px] font-medium text-slate-950 truncate">
+                          {job.file_name}
+                        </p>
                         <Badge tone={statusTone(job.status)}>
-                          {isParsingInProgress(job.status) && (
+                          {isJobInProgress(job.status) && (
                             <Loader2 className="w-3 h-3 animate-spin mr-1 inline" />
                           )}
                           {statusLabel(job.status)}
                         </Badge>
-
-                        <div className="flex items-center gap-2">
-                          {isReadyToAudit(job.status) && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleAudit(job.job_id)}
-                              disabled={busy}
-                            >
-                              {busy ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <>
-                                  <Search className="w-3.5 h-3.5" />
-                                  Audit
-                                </>
-                              )}
-                            </Button>
-                          )}
-
-                          {job.status === "complete" && (
-                            <Link to={`/product/report/${job.job_id}`}>
-                              <Button size="sm" variant="secondary">
-                                View report
-                                <ArrowRight className="w-3.5 h-3.5" />
-                              </Button>
-                            </Link>
-                          )}
-
-                          {job.status === "auditing" && (
-                            <Link to={`/product/audit/${job.job_id}`}>
-                              <Button size="sm" variant="secondary">
-                                View progress
-                              </Button>
-                            </Link>
-                          )}
-
-                          {!isParsingInProgress(job.status) &&
-                            job.status !== "auditing" && (
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={() => handleDelete(job)}
-                                disabled={busy}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                {busy ? (
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                ) : (
-                                  <>
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    Delete
-                                  </>
-                                )}
-                              </Button>
-                            )}
-                        </div>
                       </div>
+                      <p className="text-[12px] text-slate-500 truncate mt-0.5">
+                        {job.bank_name ?? "Processing…"}
+                        {job.statement_period
+                          ? ` · ${job.statement_period}`
+                          : ""}
+                        {typeof job.fee_line_count === "number"
+                          ? ` · ${job.fee_line_count} fee line${
+                              job.fee_line_count === 1 ? "" : "s"
+                            }`
+                          : ""}
+                        {job.paid ? " · Paid" : ""}
+                        {` · ${formatDate(job.created_at)}`}
+                      </p>
+                      {job.status === "failed" && (
+                        <p className="text-[12px] text-red-600/90 mt-1 line-clamp-2">
+                          {userFacingJobMessage(job)}
+                        </p>
+                      )}
                     </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </Card>
+
+                    <RowActions primary={primary} secondary={secondary} />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </main>
     </ProductLayout>

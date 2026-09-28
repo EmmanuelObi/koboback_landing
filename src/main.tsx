@@ -6,6 +6,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy.tsx";
 import Terms from "./pages/Terms.tsx";
 import Waitlist from "./pages/Waitlist.tsx";
 import { AuthProvider } from "./product/context/AuthContext.tsx";
+import { ToastProvider } from "./product/ui/Toast.tsx";
 import ProtectedRoute from "./product/components/ProtectedRoute.tsx";
 import ProductAuth from "./product/pages/ProductAuth.tsx";
 import OnboardingPage from "./product/pages/OnboardingPage.tsx";
@@ -14,6 +15,9 @@ import ProfilePage from "./product/pages/ProfilePage.tsx";
 import StatementsPage from "./product/pages/StatementsPage.tsx";
 import AuditJobPage from "./product/pages/AuditJobPage.tsx";
 import ReportPage from "./product/pages/ReportPage.tsx";
+import AdminRoute from "./product/components/AdminRoute.tsx";
+import AdminQueuePage from "./product/pages/AdminQueuePage.tsx";
+import AdminReviewPage from "./product/pages/AdminReviewPage.tsx";
 import CookieBanner from "./components/CookieBanner.tsx";
 import VercelAnalytics from "./components/VercelAnalytics.tsx";
 import "./index.css";
@@ -22,6 +26,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
+        <ToastProvider>
         <Routes>
           <Route path="/" element={<App />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -80,9 +85,30 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/product/admin"
+            element={
+              <ProtectedRoute>
+                <AdminRoute>
+                  <AdminQueuePage />
+                </AdminRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/product/admin/review/:jobId"
+            element={
+              <ProtectedRoute>
+                <AdminRoute>
+                  <AdminReviewPage />
+                </AdminRoute>
+              </ProtectedRoute>
+            }
+          />
         </Routes>
         <CookieBanner />
         <VercelAnalytics />
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>,

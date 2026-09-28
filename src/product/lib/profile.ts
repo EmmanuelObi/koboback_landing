@@ -6,6 +6,7 @@ export interface UserProfile {
   phone: string | null;
   company: string | null;
   primary_bank: string | null;
+  account_type: "savings" | "current" | null;
   referral_source: string | null;
   terms_accepted_at: string | null;
   onboarding_completed_at: string | null;
@@ -49,13 +50,26 @@ export const REFERRAL_SOURCES = [
   "Other",
 ] as const;
 
+export const ACCOUNT_TYPES = [
+  { value: "savings" as const, label: "Savings" },
+  { value: "current" as const, label: "Current" },
+];
+
 export function isOnboardingComplete(profile: UserProfile | null): boolean {
   if (!profile) return false;
   return Boolean(profile.onboarding_completed_at);
 }
 
+/** True when optional profile details are still empty (for soft nudges). */
+export function profileNeedsDetails(profile: UserProfile | null): boolean {
+  if (!profile || !profile.onboarding_completed_at) return false;
+  return !profile.phone?.trim() || !profile.primary_bank?.trim();
+}
+
 export function validatePhone(phone: string): string | null {
-  const digits = phone.replace(/\D/g, "");
+  const trimmed = phone.trim();
+  if (!trimmed) return null;
+  const digits = trimmed.replace(/\D/g, "");
   if (digits.length < 10 || digits.length > 14) {
     return "Enter a valid Nigerian phone number (10–14 digits).";
   }
@@ -96,9 +110,10 @@ export async function createProfileStub(
 
 export interface ProfileUpdateInput {
   full_name?: string;
-  phone?: string;
+  phone?: string | null;
   company?: string | null;
   primary_bank?: string | null;
+  account_type?: "savings" | "current" | null;
   referral_source?: string | null;
   terms_accepted_at?: string;
   onboarding_completed_at?: string | null;

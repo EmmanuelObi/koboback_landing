@@ -49,6 +49,7 @@ export type JobStatus =
   | "parsing"
   | "parsed"
   | "auditing"
+  | "pending_review"
   | "complete"
   | "failed";
 
@@ -78,6 +79,12 @@ export interface JobSummary {
   statement_period: string | null;
   risk_level: string | null;
   total_overcharge_amount: number | null;
+  has_parsed_data?: boolean;
+  user_id?: string | null;
+  user_email?: string | null;
+  fee_line_count?: number | null;
+  paid?: boolean;
+  payment_required?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -96,9 +103,39 @@ export interface JobStatusResponse {
   bank_name: string | null;
   parsed_statement: ParsedStatement | null;
   audit_report: AuditReport | null;
+  engine_audit_report?: AuditReport | null;
   error: string | null;
+  user_id?: string | null;
+  user_email?: string | null;
+  review_notes?: string | null;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  account_type?: "savings" | "current" | null;
+  paid?: boolean;
+  paid_at?: string | null;
+  payment_required?: boolean;
+  scan?: FeeScan | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface FeeScan {
+  fee_line_count: number;
+  by_category: Record<string, number>;
+}
+
+export interface MeResponse {
+  user_id: string;
+  email: string | null;
+  is_admin: boolean;
+}
+
+export interface AdminUserSummary {
+  user_id: string;
+  email: string | null;
+  job_count: number;
+  pending_review_count: number;
+  released_count: number;
 }
 
 export interface FlaggedTransaction {
@@ -197,8 +234,36 @@ export async function listJobs(
   return data;
 }
 
-export async function startJobAudit(jobId: string): Promise<{ job_id: string; status: JobStatus; message: string }> {
-  const { data } = await api.post(`/jobs/${jobId}/audit`);
+export async function startJobPayment(jobId: string): Promise<{
+  authorization_url: string;
+  reference: string;
+  amount_kobo: number;
+}> {
+  const { data } = await api.post(`/jobs/${jobId}/pay`, {
+    callback_origin: window.location.origin,
+  });
+  return data;
+}
+
+export async function refreshJobPayment(
+  jobId: string,
+): Promise<{ paid: boolean }> {
+  const { data } = await api.get<{ paid: boolean }>(`/jobs/${jobId}/payment`);
+  return data;
+}
+
+export async function startJobAudit(
+  jobId: string,
+  retry = false,
+  accountType: "savings" | "current",
+): Promise<{ job_id: string; status: JobStatus; message: string }> {
+  const { data } = await api.post(
+    `/jobs/${jobId}/audit`,
+    { account_type: accountType },
+    {
+      params: retry ? { retry: true } : undefined,
+    },
+  );
   return data;
 }
 
@@ -211,10 +276,14 @@ export async function pollJobUntilParsed(
   jobId: string,
   onProgress?: (status: JobStatusResponse) => void,
 ): Promise<JobStatusResponse> {
+  // Large Excel/PDF extracts can run for tens of minutes; keep polling
+  // aligned with the worker timeout rather than failing the UI early.
   const schedule: [number, number][] = [
     [2_000, 2],
-    [5_000, 6],
-    [10_000, 12],
+    [5_000, 12],
+    [10_000, 30],
+    [20_000, 90],
+    [30_000, 60],
   ];
 
   for (const [delay, count] of schedule) {
@@ -225,7 +294,8 @@ export async function pollJobUntilParsed(
       if (
         status.status === "parsed" ||
         status.status === "failed" ||
-        status.status === "complete"
+        status.status === "complete" ||
+        status.status === "pending_review"
       ) {
         return status;
       }
@@ -239,11 +309,13 @@ export async function pollJobUntilAudited(
   jobId: string,
   onProgress?: (status: JobStatusResponse) => void,
 ): Promise<JobStatusResponse> {
+  // Align with worker RQ timeout (~60 min) so long audits don't fake-timeout.
   const schedule: [number, number][] = [
-    [3_000, 1],
-    [5_000, 3],
-    [10_000, 6],
-    [20_000, 60],
+    [3_000, 2],
+    [5_000, 12],
+    [10_000, 30],
+    [20_000, 90],
+    [30_000, 60],
   ];
 
   for (const [delay, count] of schedule) {
@@ -251,7 +323,11 @@ export async function pollJobUntilAudited(
       await new Promise((resolve) => setTimeout(resolve, delay));
       const status = await getJobStatus(jobId);
       onProgress?.(status);
-      if (status.status === "complete" || status.status === "failed") {
+      if (
+        status.status === "complete" ||
+        status.status === "failed" ||
+        status.status === "pending_review"
+      ) {
         return status;
       }
     }
@@ -265,10 +341,11 @@ export async function pollJobUntilComplete(
   onProgress?: (status: JobStatusResponse) => void,
 ): Promise<JobStatusResponse> {
   const schedule: [number, number][] = [
-    [3_000, 1],
-    [5_000, 3],
-    [10_000, 6],
-    [20_000, 60],
+    [3_000, 2],
+    [5_000, 12],
+    [10_000, 30],
+    [20_000, 90],
+    [30_000, 60],
   ];
 
   for (const [delay, count] of schedule) {
@@ -279,7 +356,8 @@ export async function pollJobUntilComplete(
       if (
         status.status === "complete" ||
         status.status === "failed" ||
-        status.status === "parsed"
+        status.status === "parsed" ||
+        status.status === "pending_review"
       ) {
         return status;
       }
@@ -291,6 +369,85 @@ export async function pollJobUntilComplete(
 
 export async function getReport(sessionId: string): Promise<AuditReport> {
   const { data } = await api.get<AuditReport>(`/reports/${sessionId}`);
+  return data;
+}
+
+export async function getMe(): Promise<MeResponse> {
+  const { data } = await api.get<MeResponse>("/me");
+  return data;
+}
+
+export async function listAdminJobs(
+  params?: {
+    status?: JobStatus;
+    user_id?: string;
+    cursor?: string;
+    limit?: number;
+  },
+): Promise<JobListResponse> {
+  const { data } = await api.get<JobListResponse>("/admin/jobs", { params });
+  return data;
+}
+
+export async function listAdminUsers(): Promise<{ users: AdminUserSummary[] }> {
+  const { data } = await api.get<{ users: AdminUserSummary[] }>("/admin/users");
+  return data;
+}
+
+export async function getAdminJob(jobId: string): Promise<JobStatusResponse> {
+  const { data } = await api.get<JobStatusResponse>(`/admin/jobs/${jobId}`);
+  return data;
+}
+
+export async function saveAdminReport(
+  jobId: string,
+  report: AuditReport,
+  notes?: string,
+): Promise<JobStatusResponse> {
+  const { data } = await api.put<JobStatusResponse>(
+    `/admin/jobs/${jobId}/report`,
+    { report, notes: notes ?? null },
+  );
+  return data;
+}
+
+export async function resetAdminReport(
+  jobId: string,
+): Promise<JobStatusResponse> {
+  const { data } = await api.post<JobStatusResponse>(
+    `/admin/jobs/${jobId}/report/reset`,
+  );
+  return data;
+}
+
+export async function getAdminStatementDownload(
+  jobId: string,
+): Promise<{ download_url: string; file_name: string; expires_in: number }> {
+  const { data } = await api.get(`/admin/jobs/${jobId}/statement-download`);
+  return data;
+}
+
+export async function approveAdminJob(
+  jobId: string,
+  notes?: string,
+  report?: AuditReport,
+): Promise<JobStatusResponse> {
+  const { data } = await api.post<JobStatusResponse>(
+    `/admin/jobs/${jobId}/approve`,
+    { notes: notes || null, report: report ?? null },
+  );
+  return data;
+}
+
+export async function holdAdminJob(
+  jobId: string,
+  notes?: string,
+  report?: AuditReport,
+): Promise<JobStatusResponse> {
+  const { data } = await api.post<JobStatusResponse>(
+    `/admin/jobs/${jobId}/hold`,
+    { notes: notes || null, report: report ?? null },
+  );
   return data;
 }
 

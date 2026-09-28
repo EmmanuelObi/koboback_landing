@@ -1,18 +1,43 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Upload, FileText, X } from "lucide-react";
 import { cn } from "../ui/tokens";
+import { validateStatementFile } from "../lib/auditStatus";
 
 interface FileDropzoneProps {
-  onFileSelect: (file: File) => void;
+  onFileSelect: (file: File | null) => void;
+  onValidationError?: (message: string) => void;
   disabled?: boolean;
+  /** Clear internal selection when parent clears the file */
+  selectedName?: string | null;
 }
 
 export default function FileDropzone({
   onFileSelect,
+  onValidationError,
   disabled,
+  selectedName,
 }: FileDropzoneProps) {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    if (!selectedName) {
+      setSelectedFile(null);
+    }
+  }, [selectedName]);
+
+  const acceptFile = useCallback(
+    (file: File) => {
+      const validationError = validateStatementFile(file);
+      if (validationError) {
+        onValidationError?.(validationError);
+        return;
+      }
+      setSelectedFile(file);
+      onFileSelect(file);
+    },
+    [onFileSelect, onValidationError],
+  );
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -32,38 +57,36 @@ export default function FileDropzone({
       if (disabled) return;
 
       const file = e.dataTransfer.files?.[0];
-      if (file && isValidFile(file)) {
-        setSelectedFile(file);
-        onFileSelect(file);
-      }
+      if (file) acceptFile(file);
     },
-    [onFileSelect, disabled],
+    [acceptFile, disabled],
   );
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file && isValidFile(file)) {
-        setSelectedFile(file);
-        onFileSelect(file);
-      }
+      e.target.value = "";
+      if (file) acceptFile(file);
     },
-    [onFileSelect],
+    [acceptFile],
   );
 
-  const clearFile = () => {
+  const clearFile = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setSelectedFile(null);
+    onFileSelect(null);
   };
 
   return (
     <div
       className={cn(
-        "relative border border-dashed rounded-lg p-10 text-center transition-colors",
+        "relative border border-dashed rounded-xl p-8 sm:p-10 text-center transition-colors",
         dragActive
-          ? "border-brand bg-brand-muted"
+          ? "border-brand bg-white"
           : selectedFile
-            ? "border-green-500 bg-green-50/50"
-            : "border-slate-300 bg-white hover:border-slate-400 hover:bg-slate-50/50",
+            ? "border-brand/40 bg-white"
+            : "border-slate-300/90 bg-white/80 hover:border-brand/40 hover:bg-white",
         disabled && "opacity-50 cursor-not-allowed",
         !disabled && "cursor-pointer",
       )}
@@ -81,7 +104,7 @@ export default function FileDropzone({
       />
 
       {selectedFile ? (
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex items-center justify-center gap-3 relative z-10">
           <FileText className="w-8 h-8 text-green-600" />
           <div className="text-left">
             <p className="text-[14px] font-medium text-slate-950">
@@ -93,10 +116,7 @@ export default function FileDropzone({
           </div>
           <button
             type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              clearFile();
-            }}
+            onClick={clearFile}
             className="ml-2 p-1.5 rounded-md hover:bg-white/80 transition"
           >
             <X className="w-4 h-4 text-slate-500" />
@@ -118,15 +138,4 @@ export default function FileDropzone({
       )}
     </div>
   );
-}
-
-function isValidFile(file: File): boolean {
-  const validTypes = [
-    "application/pdf",
-    "text/csv",
-    "application/vnd.ms-excel",
-  ];
-  const validExtensions = [".pdf", ".csv", ".xls", ".xlsx"];
-  const ext = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
-  return validTypes.includes(file.type) || validExtensions.includes(ext);
 }

@@ -19,6 +19,13 @@ import {
   isOnboardingComplete,
   type UserProfile,
 } from "../lib/profile";
+import { humanizeAuthError } from "../lib/authErrors";
+import { getMe } from "../api/client";
+
+export type SignUpResult = {
+  error: string | null;
+  needsEmailConfirmation: boolean;
+};
 
 interface AuthContextValue {
   user: User | null;
@@ -28,12 +35,14 @@ interface AuthContextValue {
   profileLoading: boolean;
   isConfigured: boolean;
   onboardingComplete: boolean;
+  isAdmin: boolean;
   signUp: (
     email: string,
     password: string,
     termsAccepted: boolean,
-  ) => Promise<string | null>;
+  ) => Promise<SignUpResult>;
   signIn: (email: string, password: string) => Promise<string | null>;
+  resetPasswordForEmail: (email: string) => Promise<string | null>;
   signOut: () => Promise<void>;
   getAccessToken: () => Promise<string | null>;
   refreshProfile: () => Promise<void>;
@@ -47,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const loadProfile = useCallback(async (userId: string) => {
     if (!isSupabaseConfigured) {
@@ -101,23 +111,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [loadProfile]);
 
+  useEffect(() => {
+    if (loading) return;
+    if (isSupabaseConfigured && !user) {
+      setIsAdmin(false);
+      return;
+    }
+    let cancelled = false;
+    getMe()
+      .then((me) => {
+        if (!cancelled) setIsAdmin(me.is_admin);
+      })
+      .catch(() => {
+        if (!cancelled) setIsAdmin(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, loading]);
+
   const signUp = useCallback(
-    async (email: string, password: string, termsAccepted: boolean) => {
+    async (
+      email: string,
+      password: string,
+      termsAccepted: boolean,
+    ): Promise<SignUpResult> => {
       if (!termsAccepted) {
-        return "You must accept the Terms of Service and Privacy Policy.";
+        return {
+          error: "You must accept the Terms of Service and Privacy Policy.",
+          needsEmailConfirmation: false,
+        };
       }
       const supabase = getSupabaseClient();
-      if (!supabase) return "Authentication is not configured.";
+      if (!supabase) {
+        return {
+          error: "Authentication is not configured.",
+          needsEmailConfirmation: false,
+        };
+      }
       const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) return error.message;
+      if (error) {
+        return {
+          error: humanizeAuthError(error.message),
+          needsEmailConfirmation: false,
+        };
+      }
       if (data.user) {
         try {
           await createProfileStub(data.user.id, new Date().toISOString());
         } catch (err) {
-          return err instanceof Error ? err.message : "Failed to create profile.";
+          return {
+            error:
+              err instanceof Error
+                ? humanizeAuthError(err.message)
+                : "Failed to create profile.",
+            needsEmailConfirmation: false,
+          };
         }
       }
-      return null;
+      return {
+        error: null,
+        needsEmailConfirmation: Boolean(data.user) && !data.session,
+      };
     },
     [],
   );
@@ -129,7 +184,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
     });
-    return error?.message ?? null;
+    return error ? humanizeAuthError(error.message) : null;
+  }, []);
+
+  const resetPasswordForEmail = useCallback(async (email: string) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return "Authentication is not configured.";
+    const redirectTo = `${window.location.origin}/product`;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo,
+    });
+    return error ? humanizeAuthError(error.message) : null;
   }, []);
 
   const signOut = useCallback(async () => {
@@ -157,8 +222,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profileLoading,
       isConfigured: isSupabaseConfigured,
       onboardingComplete,
+      isAdmin,
       signUp,
       signIn,
+      resetPasswordForEmail,
       signOut,
       getAccessToken,
       refreshProfile,
@@ -170,8 +237,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       profileLoading,
       onboardingComplete,
+      isAdmin,
       signUp,
       signIn,
+      resetPasswordForEmail,
       signOut,
       getAccessToken,
       refreshProfile,

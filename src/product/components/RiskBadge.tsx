@@ -33,7 +33,7 @@ export default function RiskBadge({ level, score }: RiskBadgeProps) {
       <span
         className={`inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${c.bg} ${c.text}`}
       >
-        {level.toUpperCase()} RISK
+        {level.toUpperCase()} REVIEW
       </span>
     </div>
   );

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  ACCOUNT_TYPES,
   NIGERIAN_BANKS,
   REFERRAL_SOURCES,
   validatePhone,
@@ -15,24 +16,31 @@ export interface ProfileFormValues {
   phone: string;
   company: string;
   primary_bank: string;
+  account_type: "savings" | "current" | "";
   referral_source: string;
 }
 
 interface ProfileFormProps {
   initial?: UserProfile | null;
   submitLabel: string;
+  /** Onboarding only requires name; profile page keeps the fuller form. */
+  mode?: "onboarding" | "full";
   onSubmit: (values: ProfileFormValues) => Promise<void>;
 }
 
 export default function ProfileForm({
   initial,
   submitLabel,
+  mode = "full",
   onSubmit,
 }: ProfileFormProps) {
   const [fullName, setFullName] = useState(initial?.full_name ?? "");
   const [phone, setPhone] = useState(initial?.phone ?? "");
   const [company, setCompany] = useState(initial?.company ?? "");
   const [primaryBank, setPrimaryBank] = useState(initial?.primary_bank ?? "");
+  const [accountType, setAccountType] = useState<"savings" | "current" | "">(
+    initial?.account_type ?? "",
+  );
   const [referralSource, setReferralSource] = useState(
     initial?.referral_source ?? "",
   );
@@ -47,13 +55,10 @@ export default function ProfileForm({
       setError("Full name is required.");
       return;
     }
+
     const phoneError = validatePhone(phone);
     if (phoneError) {
       setError(phoneError);
-      return;
-    }
-    if (!primaryBank) {
-      setError("Please select your primary bank.");
       return;
     }
 
@@ -64,6 +69,7 @@ export default function ProfileForm({
         phone: phone.trim(),
         company: company.trim(),
         primary_bank: primaryBank,
+        account_type: accountType,
         referral_source: referralSource,
       });
     } catch (err) {
@@ -89,24 +95,28 @@ export default function ProfileForm({
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           placeholder="Ada Okonkwo"
+          autoComplete="name"
         />
       </div>
 
       <div>
-        <label className={labelClass}>Phone number *</label>
+        <label className={labelClass}>
+          Phone number{mode === "full" ? "" : " (optional)"}
+        </label>
         <Input
           type="tel"
-          required
           placeholder="+234 801 234 5678"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
+          autoComplete="tel"
         />
       </div>
 
       <div>
-        <label className={labelClass}>Primary bank *</label>
+        <label className={labelClass}>
+          Primary bank{mode === "full" ? "" : " (optional)"}
+        </label>
         <Select
-          required
           value={primaryBank}
           onChange={(e) => setPrimaryBank(e.target.value)}
         >
@@ -119,12 +129,35 @@ export default function ProfileForm({
         </Select>
       </div>
 
+      {mode === "full" && (
+        <div>
+          <label className={labelClass}>Usual account type (optional)</label>
+          <Select
+            value={accountType}
+            onChange={(e) =>
+              setAccountType(e.target.value as "savings" | "current" | "")
+            }
+          >
+            <option value="">Select one…</option>
+            {ACCOUNT_TYPES.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </Select>
+          <p className="text-[12px] text-slate-500 mt-1">
+            We still confirm this on each statement before the audit.
+          </p>
+        </div>
+      )}
+
       <div>
         <label className={labelClass}>Company (optional)</label>
         <Input
           type="text"
           value={company}
           onChange={(e) => setCompany(e.target.value)}
+          autoComplete="organization"
         />
       </div>
 

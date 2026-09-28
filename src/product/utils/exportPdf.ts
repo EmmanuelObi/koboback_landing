@@ -173,7 +173,7 @@ export function exportReportAsPdf(report: AuditReport): void {
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
   setColor(C.dark);
-  doc.text("Bank Fee Audit Report", mx, titleY);
+  doc.text("Bank Fee Advisory Report", mx, titleY);
 
   // Divider
   setDraw(C.brand);
@@ -218,7 +218,7 @@ export function exportReportAsPdf(report: AuditReport): void {
   doc.setLineWidth(0.4);
   doc.roundedRect(mx, y, cardW, cardH, 2, 2, "FD");
   label(
-    hasOvercharge ? "Total Overcharged" : "No Overcharges",
+    hasOvercharge ? "Est. Potential Overcharge" : "No Likely Overcharges",
     mx + 5,
     y + 8,
     hasOvercharge ? C.red : C.green,
@@ -235,7 +235,7 @@ export function exportReportAsPdf(report: AuditReport): void {
   setFill(C.orangeLight);
   setDraw(C.orange);
   doc.roundedRect(card2x, y, cardW, cardH, 2, 2, "FD");
-  label("Violations Found", card2x + 5, y + 8, C.orange);
+  label("Items To Review", card2x + 5, y + 8, C.orange);
   bigValue(
     String(report.flagged_transactions.length),
     card2x + 5,
@@ -265,7 +265,7 @@ export function exportReportAsPdf(report: AuditReport): void {
   doc.setFont("helvetica", "bold");
   setColor(rc);
   doc.text(
-    `Overall Risk: ${report.risk_level.toUpperCase()}  (${report.risk_score}/100)`,
+    `Review level: ${report.risk_level.toUpperCase()}  (${report.risk_score}/100)`,
     mx,
     y,
   );
@@ -275,7 +275,7 @@ export function exportReportAsPdf(report: AuditReport): void {
   //  EXECUTIVE SUMMARY
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  heading("Executive Summary");
+  heading("Analysis Summary");
 
   // Light background block for the summary text
   doc.setFontSize(9.5);
@@ -300,7 +300,7 @@ export function exportReportAsPdf(report: AuditReport): void {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   if (report.flagged_transactions.length > 0) {
-    heading(`Flagged Overcharges  (${report.flagged_transactions.length})`);
+    heading(`Potential Overcharges  (${report.flagged_transactions.length})`);
 
     const tbody = report.flagged_transactions.map((tx, i) => [
       String(i + 1),
@@ -324,7 +324,7 @@ export function exportReportAsPdf(report: AuditReport): void {
           "Description",
           "Charged",
           "CBN Max",
-          "Overcharge",
+          "Potential",
           "Risk",
         ],
       ],
@@ -379,7 +379,7 @@ export function exportReportAsPdf(report: AuditReport): void {
     doc.setFont("helvetica", "bold");
     setColor(C.red);
     doc.text(
-      `Total Overcharge:  ${fmt(report.total_overcharge_amount)}`,
+      `Est. potential overcharge:  ${fmt(report.total_overcharge_amount)}`,
       pw - mx,
       y,
       { align: "right" },
@@ -387,7 +387,7 @@ export function exportReportAsPdf(report: AuditReport): void {
     y += 4;
 
     // ── Violation detail cards ──
-    heading("Violation Details & CBN Citations");
+    heading("Why These Were Flagged & CBN Citations");
 
     report.flagged_transactions.forEach((tx, i) => {
       const descText = sanitize(tx.original_description || tx.description);
@@ -473,7 +473,7 @@ export function exportReportAsPdf(report: AuditReport): void {
       doc.setFontSize(8);
       doc.setFont("helvetica", "bold");
       setColor(C.orange);
-      doc.text("Violation:", mx + 7, cy);
+      doc.text("Why flagged:", mx + 7, cy);
 
       doc.setFontSize(8.5);
       doc.setFont("helvetica", "normal");
@@ -502,7 +502,7 @@ export function exportReportAsPdf(report: AuditReport): void {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   if (report.compliance_checks.length > 0) {
-    heading("CBN Fee Compliance Checks");
+    heading("CBN Fee Guidance Checks");
 
     const compBody = report.compliance_checks.map((c) => [
       c.status.toUpperCase(),
@@ -604,7 +604,11 @@ export function exportReportAsPdf(report: AuditReport): void {
     doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
     setColor(C.faint);
-    doc.text("KoboBack  \u00B7  Confidential", mx, ph - 9);
+    doc.text(
+      "KoboBack  \u00B7  Advisory review, not a legal determination",
+      mx,
+      ph - 9,
+    );
 
     // Right: page number
     doc.text(`Page ${p} of ${totalPages}`, pw - mx, ph - 9, {

@@ -18,7 +18,9 @@ export default function OnboardingPage() {
       phone: values.phone || null,
       company: values.company || null,
       primary_bank: values.primary_bank || null,
-      account_type: values.account_type || null,
+      ...(values.account_type
+        ? { account_type: values.account_type }
+        : {}),
       referral_source: values.referral_source || null,
       onboarding_completed_at: new Date().toISOString(),
     });

@@ -126,9 +126,17 @@ export async function upsertProfile(
   const supabase = getSupabaseClient();
   if (!supabase) throw new Error("Authentication is not configured.");
 
+  // Omit empty optional fields so older schemas (missing columns) don't break signup.
+  const payload: Record<string, unknown> = { id: userId };
+  for (const [key, value] of Object.entries(input)) {
+    if (value === undefined) continue;
+    if (key === "account_type" && (value === null || value === "")) continue;
+    payload[key] = value;
+  }
+
   const { data, error } = await supabase
     .from("profiles")
-    .upsert({ id: userId, ...input }, { onConflict: "id" })
+    .upsert(payload, { onConflict: "id" })
     .select("*")
     .single();
 

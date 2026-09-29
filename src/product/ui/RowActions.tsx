@@ -58,7 +58,7 @@ export default function RowActions({
           </button>
 
           {open && (
-            <div className="absolute right-0 top-full mt-1 z-20 min-w-[160px] rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+            <div className="absolute right-0 top-full mt-1 z-50 min-w-[160px] rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
               {secondary.map((action) => (
                 <button
                   key={action.label}

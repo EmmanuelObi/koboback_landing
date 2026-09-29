@@ -17,27 +17,27 @@ export default function AuthLayout({
   aside?: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-brand-muted/40 text-slate-900 antialiased flex flex-col">
+    <div className="min-h-screen bg-brand-muted/40 text-slate-900 antialiased flex flex-col overflow-x-hidden">
       <header className="fixed inset-x-0 top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200/80">
-        <div className="max-w-[1100px] mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-[1100px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3 min-w-0">
           <Logo to="/" size="md" />
           <Link
             to={backTo}
-            className="text-[13px] text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-1"
+            className="text-[13px] text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-1 shrink-0"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> {backLabel}
           </Link>
         </div>
       </header>
 
-      <main className="flex-1 flex items-start justify-center pt-28 pb-24 px-6">
+      <main className="flex-1 flex items-start justify-center pt-28 pb-24 px-4 sm:px-6 min-w-0">
         <div
           className={
             aside
-              ? "w-full max-w-[920px] grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start"
+              ? "w-full min-w-0 max-w-[920px] grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start"
               : wide
-                ? "w-full max-w-[640px]"
-                : "w-full max-w-[440px]"
+                ? "w-full min-w-0 max-w-[640px]"
+                : "w-full min-w-0 max-w-[440px]"
           }
         >
           <div className="rounded-xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-sm">

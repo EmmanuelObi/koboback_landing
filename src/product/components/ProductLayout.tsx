@@ -130,7 +130,7 @@ export default function ProductLayout({
   );
 
   return (
-    <div className="min-h-screen bg-brand-muted/40 text-slate-900 antialiased">
+    <div className="min-h-screen bg-brand-muted/40 text-slate-900 antialiased overflow-x-hidden">
       {/* Mobile header */}
       <header className="lg:hidden fixed inset-x-0 top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200/80">
         <div className="h-14 px-4 flex items-center justify-between">
@@ -156,7 +156,7 @@ export default function ProductLayout({
             onClick={() => setMobileOpen(false)}
             aria-label="Close menu"
           />
-          <aside className="absolute inset-y-0 left-0 w-[260px] bg-white border-r border-slate-200 flex flex-col shadow-xl">
+          <aside className="absolute inset-y-0 left-0 w-[min(260px,85vw)] bg-white border-r border-slate-200 flex flex-col shadow-xl">
             <div className="h-14 flex items-center justify-between px-4 border-b border-slate-200">
               <span className="text-[15px] font-semibold text-slate-950">
                 Menu
@@ -174,18 +174,18 @@ export default function ProductLayout({
         </div>
       )}
 
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen min-w-0">
         {/* Desktop sidebar */}
         <aside className="hidden lg:flex w-[240px] fixed inset-y-0 left-0 flex-col border-r border-slate-200/80 bg-white">
           {sidebar}
         </aside>
 
         {/* Main */}
-        <div className="flex-1 lg:ml-[240px] flex flex-col min-h-screen pt-14 lg:pt-0">
+        <div className="flex-1 min-w-0 lg:ml-[240px] flex flex-col min-h-screen pt-14 lg:pt-0">
           {(title || actions) && (
             <div className="border-b border-slate-200/80 bg-white/80 backdrop-blur">
-              <div className="max-w-[960px] mx-auto px-6 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
+              <div className="max-w-[960px] mx-auto px-4 sm:px-6 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
                   {title && (
                     <h1 className="text-[18px] font-semibold text-slate-950 tracking-tight">
                       {title}
@@ -206,7 +206,7 @@ export default function ProductLayout({
             </div>
           )}
 
-          <div className="flex-1">{children}</div>
+          <div className="flex-1 min-w-0 w-full">{children}</div>
         </div>
       </div>
     </div>

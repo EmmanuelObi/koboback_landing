@@ -95,7 +95,7 @@ export default function AdminQueuePage() {
         </Button>
       }
     >
-      <main className="max-w-[960px] mx-auto px-6 py-8 lg:py-10">
+      <main className="max-w-[960px] mx-auto px-4 sm:px-6 py-8 lg:py-10 min-w-0 w-full">
         <PageHeader
           eyebrow="Admin"
           title="Audit review"
@@ -230,22 +230,24 @@ export default function AdminQueuePage() {
               {users.map((user) => (
                 <li
                   key={user.user_id}
-                  className="rounded-xl border border-slate-200/90 bg-white px-4 py-3 flex items-center gap-3"
+                  className="rounded-xl border border-slate-200/90 bg-white px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-center min-w-0"
                 >
-                  <div className="h-9 w-9 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
-                    <Shield className="w-4 h-4 text-slate-400" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[14px] font-medium text-slate-950 truncate">
-                      {user.email ?? user.user_id}
-                    </p>
-                    <p className="text-[12px] text-slate-500">
-                      {user.job_count} audit{user.job_count === 1 ? "" : "s"}
-                      {user.pending_review_count > 0
-                        ? ` · ${user.pending_review_count} waiting`
-                        : ""}
-                      {` · ${user.released_count} released`}
-                    </p>
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="h-9 w-9 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+                      <Shield className="w-4 h-4 text-slate-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[14px] font-medium text-slate-950 truncate">
+                        {user.email ?? user.user_id}
+                      </p>
+                      <p className="text-[12px] text-slate-500 truncate">
+                        {user.job_count} audit{user.job_count === 1 ? "" : "s"}
+                        {user.pending_review_count > 0
+                          ? ` · ${user.pending_review_count} waiting`
+                          : ""}
+                        {` · ${user.released_count} released`}
+                      </p>
+                    </div>
                   </div>
                   <button
                     type="button"
@@ -255,7 +257,7 @@ export default function AdminQueuePage() {
                       params.set("status", "all");
                       setSearchParams(params);
                     }}
-                    className="text-[13px] font-medium text-brand hover:underline"
+                    className="text-[13px] font-medium text-brand hover:underline pl-12 sm:pl-0 self-start sm:self-auto shrink-0"
                   >
                     View audits
                   </button>

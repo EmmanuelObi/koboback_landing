@@ -74,7 +74,7 @@ export default function ProfilePage() {
 
   return (
     <ProductLayout>
-      <main className="max-w-[640px] mx-auto px-6 py-8 lg:py-10">
+      <main className="max-w-[640px] mx-auto px-4 sm:px-6 py-8 lg:py-10 min-w-0 w-full">
         <PageHeader
           eyebrow="Account"
           title="Profile"

@@ -316,7 +316,7 @@ export default function AuditJobPage() {
   if (loading) {
     return (
       <ProductLayout>
-        <main className="max-w-[560px] mx-auto px-6 py-8 lg:py-10 space-y-4">
+        <main className="max-w-[560px] mx-auto px-4 sm:px-6 py-8 lg:py-10 space-y-4 min-w-0 w-full">
           <div className="space-y-2">
             <div className="h-3 w-24 animate-pulse rounded bg-slate-200/80" />
             <div className="h-8 w-3/4 animate-pulse rounded bg-slate-200/80" />
@@ -331,7 +331,7 @@ export default function AuditJobPage() {
   if (!jobId || (error && !jobStatus)) {
     return (
       <ProductLayout>
-        <main className="max-w-[560px] mx-auto px-6 py-24 text-center">
+        <main className="max-w-[560px] mx-auto px-4 sm:px-6 py-24 text-center min-w-0 w-full">
           <p className="text-[14px] text-slate-600 mb-6">
             {error ?? "Statement not found."}
           </p>
@@ -362,7 +362,7 @@ export default function AuditJobPage() {
         </Link>
       }
     >
-      <main className="max-w-[560px] mx-auto px-6 py-8 lg:py-10">
+      <main className="max-w-[560px] mx-auto px-4 sm:px-6 py-8 lg:py-10 min-w-0 w-full">
         <PageHeader
           eyebrow={pageEyebrow(jobStatus?.status, failed)}
           title={jobStatus?.file_name ?? "Statement audit"}

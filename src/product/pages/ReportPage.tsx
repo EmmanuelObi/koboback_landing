@@ -101,7 +101,7 @@ export default function ReportPage() {
   if (loading) {
     return (
       <ProductLayout>
-        <main className="max-w-[960px] mx-auto px-6 py-8 lg:py-10 space-y-4">
+        <main className="max-w-[960px] mx-auto px-4 sm:px-6 py-8 lg:py-10 space-y-4 min-w-0 w-full">
           <div className="h-8 w-64 animate-pulse rounded bg-slate-200/80" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[1, 2, 3].map((i) => (
@@ -120,7 +120,7 @@ export default function ReportPage() {
   if (pendingReview) {
     return (
       <ProductLayout>
-        <main className="max-w-[560px] mx-auto px-6 py-24 text-center">
+        <main className="max-w-[560px] mx-auto px-4 sm:px-6 py-24 text-center min-w-0 w-full">
           <p className="text-[16px] font-semibold text-slate-950 mb-2">
             Your report is being reviewed
           </p>
@@ -139,7 +139,7 @@ export default function ReportPage() {
   if (!report || error) {
     return (
       <ProductLayout>
-        <main className="max-w-[560px] mx-auto px-6 py-24 text-center">
+        <main className="max-w-[560px] mx-auto px-4 sm:px-6 py-24 text-center min-w-0 w-full">
           <p className="text-[14px] text-slate-600 mb-6">
             {error ?? "Report unavailable."}
           </p>
@@ -185,7 +185,7 @@ export default function ReportPage() {
         </>
       }
     >
-      <main className="max-w-[960px] mx-auto px-6 py-8 lg:py-10 space-y-6">
+      <main className="max-w-[960px] mx-auto px-4 sm:px-6 py-8 lg:py-10 space-y-6 min-w-0 w-full">
         <PageHeader
           eyebrow="Audit report"
           title={

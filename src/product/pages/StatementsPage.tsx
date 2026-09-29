@@ -168,7 +168,7 @@ export default function StatementsPage() {
 
   return (
     <ProductLayout>
-      <main className="max-w-[960px] mx-auto px-6 py-8 lg:py-10">
+      <main className="max-w-[960px] mx-auto px-4 sm:px-6 py-8 lg:py-10 min-w-0 w-full">
         <PageHeader
           eyebrow="Statements"
           title="Your bank statements"
@@ -179,7 +179,7 @@ export default function StatementsPage() {
 
         <section
           ref={uploadSectionRef}
-          className="mb-10 rounded-xl border border-brand/15 bg-gradient-to-br from-brand-muted via-white to-white p-5 sm:p-6"
+          className="mb-10 rounded-xl border border-brand/15 bg-gradient-to-br from-brand-muted via-white to-white p-4 sm:p-6 min-w-0"
         >
           <div className="mb-4">
             <h2 className="text-[15px] font-semibold text-slate-950">
@@ -329,45 +329,49 @@ export default function StatementsPage() {
               return (
                 <li
                   key={job.job_id}
-                  className="rounded-xl border border-slate-200/90 bg-white px-4 py-3.5 sm:px-5 hover:border-slate-300 transition-colors"
+                  className="rounded-xl border border-slate-200/90 bg-white px-4 py-3.5 sm:px-5 hover:border-slate-300 transition-colors min-w-0"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-brand-muted/80 border border-brand/10 flex items-center justify-center shrink-0">
-                      <FileText className="w-4 h-4 text-brand-dark" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-[14px] font-medium text-slate-950 truncate">
-                          {job.file_name}
-                        </p>
-                        <Badge tone={statusTone(job.status)}>
-                          {isJobInProgress(job.status) && (
-                            <Loader2 className="w-3 h-3 animate-spin mr-1 inline" />
-                          )}
-                          {statusLabel(job.status)}
-                        </Badge>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="h-9 w-9 rounded-lg bg-brand-muted/80 border border-brand/10 flex items-center justify-center shrink-0">
+                        <FileText className="w-4 h-4 text-brand-dark" />
                       </div>
-                      <p className="text-[12px] text-slate-500 truncate mt-0.5">
-                        {job.bank_name ?? "Processing…"}
-                        {job.statement_period
-                          ? ` · ${job.statement_period}`
-                          : ""}
-                        {typeof job.fee_line_count === "number"
-                          ? ` · ${job.fee_line_count} fee line${
-                              job.fee_line_count === 1 ? "" : "s"
-                            }`
-                          : ""}
-                        {job.paid ? " · Paid" : ""}
-                        {` · ${formatDate(job.created_at)}`}
-                      </p>
-                      {job.status === "failed" && (
-                        <p className="text-[12px] text-red-600/90 mt-1 line-clamp-2">
-                          {userFacingJobMessage(job)}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-[14px] font-medium text-slate-950 truncate">
+                            {job.file_name}
+                          </p>
+                          <Badge tone={statusTone(job.status)}>
+                            {isJobInProgress(job.status) && (
+                              <Loader2 className="w-3 h-3 animate-spin mr-1 inline" />
+                            )}
+                            {statusLabel(job.status)}
+                          </Badge>
+                        </div>
+                        <p className="text-[12px] text-slate-500 truncate mt-0.5">
+                          {job.bank_name ?? "Processing…"}
+                          {job.statement_period
+                            ? ` · ${job.statement_period}`
+                            : ""}
+                          {typeof job.fee_line_count === "number"
+                            ? ` · ${job.fee_line_count} fee line${
+                                job.fee_line_count === 1 ? "" : "s"
+                              }`
+                            : ""}
+                          {job.paid ? " · Paid" : ""}
+                          {` · ${formatDate(job.created_at)}`}
                         </p>
-                      )}
+                        {job.status === "failed" && (
+                          <p className="text-[12px] text-red-600/90 mt-1 line-clamp-2">
+                            {userFacingJobMessage(job)}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
-                    <RowActions primary={primary} secondary={secondary} />
+                    <div className="flex items-center gap-2 pl-12 sm:pl-0 shrink-0">
+                      <RowActions primary={primary} secondary={secondary} />
+                    </div>
                   </div>
                 </li>
               );

@@ -19,8 +19,8 @@ const statusBg = {
 
 export default function ComplianceTable({ checks }: Props) {
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200">
-      <table className="min-w-full divide-y divide-slate-200">
+    <div className="overflow-x-auto rounded-lg border border-slate-200 -mx-1 px-1 sm:mx-0 sm:px-0">
+      <table className="min-w-[480px] w-full divide-y divide-slate-200">
         <thead className="bg-slate-50">
           <tr>
             <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">

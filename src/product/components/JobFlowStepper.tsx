@@ -26,7 +26,7 @@ export default function JobFlowStepper({
   return (
     <ol
       className={cn(
-        "flex items-center gap-1 sm:gap-2 text-[12px] sm:text-[13px]",
+        "flex flex-wrap items-center gap-1.5 sm:gap-2 text-[12px] sm:text-[13px]",
         className,
       )}
       aria-label="Statement progress"
@@ -49,7 +49,7 @@ export default function JobFlowStepper({
             )}
             <span
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-medium truncate",
+                "inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-medium",
                 failHere && "bg-red-50 text-red-700",
                 !failHere && done && "bg-slate-100 text-slate-700",
                 !failHere && current && "bg-brand-muted text-brand-dark",
@@ -67,7 +67,9 @@ export default function JobFlowStepper({
               >
                 {index + 1}
               </span>
-              {step.label}
+              <span className="truncate max-w-[5.5rem] sm:max-w-none">
+                {step.label}
+              </span>
             </span>
           </li>
         );

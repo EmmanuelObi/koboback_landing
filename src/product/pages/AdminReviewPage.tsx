@@ -236,7 +236,7 @@ export default function AdminReviewPage() {
   if (loading) {
     return (
       <ProductLayout>
-        <main className="max-w-[1100px] mx-auto px-6 py-8 space-y-4">
+        <main className="max-w-[1100px] mx-auto px-4 sm:px-6 py-8 space-y-4 min-w-0 w-full">
           <div className="h-8 w-64 animate-pulse rounded bg-slate-200/80" />
           <div className="h-40 animate-pulse rounded-xl bg-white border border-slate-200/80" />
         </main>
@@ -247,7 +247,7 @@ export default function AdminReviewPage() {
   if (!job || (error && !job)) {
     return (
       <ProductLayout>
-        <main className="max-w-[560px] mx-auto px-6 py-24 text-center">
+        <main className="max-w-[560px] mx-auto px-4 sm:px-6 py-24 text-center min-w-0 w-full">
           <p className="text-[14px] text-slate-600 mb-6">
             {error ?? "Audit not found."}
           </p>
@@ -270,7 +270,7 @@ export default function AdminReviewPage() {
         </Link>
       }
     >
-      <main className="max-w-[1100px] mx-auto px-6 py-8 lg:py-10 space-y-6">
+      <main className="max-w-[1100px] mx-auto px-4 sm:px-6 py-8 lg:py-10 space-y-6 min-w-0 w-full">
         <PageHeader
           eyebrow="Manual review"
           title={job.file_name ?? "Audit review"}

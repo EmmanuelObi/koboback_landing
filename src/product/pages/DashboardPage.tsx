@@ -106,7 +106,7 @@ export default function DashboardPage() {
         </Link>
       }
     >
-      <main className="max-w-[960px] mx-auto px-6 py-8 lg:py-10">
+      <main className="max-w-[960px] mx-auto px-4 sm:px-6 py-8 lg:py-10 min-w-0 w-full">
         <PageHeader
           eyebrow="Overview"
           title={`Welcome back, ${greeting}`}
@@ -235,41 +235,45 @@ export default function DashboardPage() {
                     return (
                       <li
                         key={job.job_id}
-                        className="rounded-xl border border-slate-200/90 bg-white px-4 py-3.5 flex items-center gap-3"
+                        className="rounded-xl border border-slate-200/90 bg-white px-4 py-3.5 flex flex-col gap-3 sm:flex-row sm:items-center min-w-0"
                       >
-                        <div className="h-9 w-9 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
-                          {job.status === "failed" ? (
-                            <AlertTriangle className="w-4 h-4 text-amber-600" />
-                          ) : isReadyToAudit(job.status) || canRetryAudit(job) ? (
-                            <Search className="w-4 h-4 text-brand" />
-                          ) : (
-                            <Clock className="w-4 h-4 text-slate-400" />
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <div className="h-9 w-9 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+                            {job.status === "failed" ? (
+                              <AlertTriangle className="w-4 h-4 text-amber-600" />
+                            ) : isReadyToAudit(job.status) || canRetryAudit(job) ? (
+                              <Search className="w-4 h-4 text-brand" />
+                            ) : (
+                              <Clock className="w-4 h-4 text-slate-400" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[14px] font-medium text-slate-950 truncate">
+                              {job.file_name}
+                            </p>
+                            <p className="text-[12px] text-slate-500 truncate">
+                              {job.bank_name ?? "Processing…"}
+                              {typeof job.fee_line_count === "number"
+                                ? ` · ${job.fee_line_count} fee line${
+                                    job.fee_line_count === 1 ? "" : "s"
+                                  }`
+                                : ""}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 pl-12 sm:pl-0 shrink-0 flex-wrap">
+                          <Badge tone={statusTone(job.status)}>
+                            {statusLabel(job.status)}
+                          </Badge>
+                          {next && (
+                            <Link to={next.to}>
+                              <Button size="sm" variant="secondary">
+                                {next.label}
+                                <ArrowRight className="w-3.5 h-3.5" />
+                              </Button>
+                            </Link>
                           )}
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[14px] font-medium text-slate-950 truncate">
-                            {job.file_name}
-                          </p>
-                          <p className="text-[12px] text-slate-500 truncate">
-                            {job.bank_name ?? "Processing…"}
-                            {typeof job.fee_line_count === "number"
-                              ? ` · ${job.fee_line_count} fee line${
-                                  job.fee_line_count === 1 ? "" : "s"
-                                }`
-                              : ""}
-                          </p>
-                        </div>
-                        <Badge tone={statusTone(job.status)}>
-                          {statusLabel(job.status)}
-                        </Badge>
-                        {next && (
-                          <Link to={next.to}>
-                            <Button size="sm" variant="secondary">
-                              {next.label}
-                              <ArrowRight className="w-3.5 h-3.5" />
-                            </Button>
-                          </Link>
-                        )}
                       </li>
                     );
                   })}

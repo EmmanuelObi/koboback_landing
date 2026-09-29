@@ -87,8 +87,8 @@ const steps = [
   {
     icon: Search,
     number: "02",
-    title: "AI scans for errors",
-    desc: "Our engine checks every transaction against known patterns of bank errors and unreversed debits.",
+    title: "We check fee lines against CBN rules",
+    desc: "First a free inventory of fee-like charges, then an advisory audit that flags lines that may not match Central Bank guidelines.",
   },
   {
     icon: FileText,
@@ -296,14 +296,8 @@ export default function App() {
           {/* Desktop CTAs */}
           <div className="hidden md:flex items-center gap-2">
             <Link
-              to="/waitlist"
-              className="inline-flex items-center gap-1.5 h-8 px-4 rounded-md bg-brand text-white text-[13px] font-medium hover:bg-brand-dark transition-colors"
-            >
-              Join waitlist
-            </Link>
-            <Link
               to="/product"
-              className="inline-flex items-center h-8 px-4 rounded-md border border-brand/20 text-slate-700 text-[13px] font-medium hover:border-brand/40 hover:text-brand-dark transition-colors"
+              className="inline-flex items-center gap-1.5 h-8 px-4 rounded-md bg-brand text-white text-[13px] font-medium hover:bg-brand-dark transition-colors"
             >
               Start audit
             </Link>
@@ -345,16 +339,9 @@ export default function App() {
                   </a>
                 ))}
                 <Link
-                  to="/waitlist"
-                  onClick={() => setMobileOpen(false)}
-                  className="mt-2 inline-flex items-center justify-center h-9 px-4 rounded-md bg-brand text-white text-[13px] font-medium"
-                >
-                  Join waitlist
-                </Link>
-                <Link
                   to="/product"
                   onClick={() => setMobileOpen(false)}
-                  className="inline-flex items-center justify-center h-9 px-4 rounded-md border border-brand/20 text-slate-700 text-[13px] font-medium"
+                  className="mt-2 inline-flex items-center justify-center h-9 px-4 rounded-md bg-brand text-white text-[13px] font-medium"
                 >
                   Start audit
                 </Link>
@@ -385,7 +372,7 @@ export default function App() {
             <div className="inline-flex items-center gap-2 mb-8 px-3 py-1 rounded-full border border-brand/20 bg-brand-muted">
               <span className="h-1.5 w-1.5 rounded-full bg-brand" />
               <span className="text-[12px] font-medium text-brand-dark tracking-wide">
-                AI-powered bank error detection · Nigeria
+                Bank fee checks · Nigeria
               </span>
             </div>
 
@@ -398,25 +385,25 @@ export default function App() {
 
             {/* Sub-headline */}
             <p className="mt-6 text-[17px] text-slate-500 leading-relaxed max-w-[520px]">
-              KoboBack scans your bank statement using AI to detect hidden
-              charges, failed transaction refunds, and billing errors — then
-              helps you understand and recover what you're owed.
+              Upload a Nigerian bank statement. We inventory fee-like lines,
+              compare them to CBN rules, and help you understand what may be
+              recoverable — no bank login required.
             </p>
 
             {/* CTAs */}
             <div className="mt-10 flex flex-col sm:flex-row items-start gap-3">
               <Link
-                to="/waitlist"
+                to="/product"
                 className="inline-flex items-center gap-2 h-11 px-5 rounded-md bg-brand text-white text-[14px] font-medium hover:bg-brand-dark transition-colors"
               >
-                Join the waitlist <ArrowRight className="h-4 w-4" />
+                Start your audit <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link
-                to="/product"
+              <a
+                href="#how-it-works"
                 className="inline-flex items-center gap-2 h-11 px-5 rounded-md border border-brand/20 text-slate-600 text-[14px] font-medium hover:border-brand/40 hover:text-brand-dark transition-colors"
               >
-                Start your audit
-              </Link>
+                How it works
+              </a>
             </div>
 
             {/* Trust line */}
@@ -682,10 +669,10 @@ export default function App() {
                 knowing.
               </p>
               <Link
-                to="/waitlist"
+                to="/product"
                 className="mt-8 inline-flex items-center gap-2 h-10 px-5 rounded-md bg-brand text-white text-[13px] font-medium hover:bg-brand-dark transition-colors"
               >
-                Join the waitlist <ArrowRight className="h-4 w-4" />
+                Start your audit <ArrowRight className="h-4 w-4" />
               </Link>
             </motion.div>
 
@@ -835,10 +822,10 @@ export default function App() {
                 ))}
               </ul>
               <Link
-                to="/waitlist"
+                to="/product"
                 className="mt-8 inline-flex items-center justify-center h-10 px-4 rounded-md border border-brand/20 text-slate-700 text-[13px] font-medium hover:border-brand/40 hover:text-brand-dark transition-colors"
               >
-                Get early access
+                Start free scan
               </Link>
             </motion.div>
 
@@ -888,10 +875,10 @@ export default function App() {
                 ))}
               </ul>
               <Link
-                to="/waitlist"
+                to="/product"
                 className="mt-8 inline-flex items-center justify-center h-10 px-4 rounded-md bg-brand text-white text-[13px] font-medium hover:bg-brand-dark transition-colors"
               >
-                Join the waitlist
+                Start audit
               </Link>
             </motion.div>
 
@@ -949,7 +936,7 @@ export default function App() {
       </section>
 
       {/* ══════════════════════════════════════════════
-          WAITLIST CTA
+          START AUDIT CTA
       ══════════════════════════════════════════════ */}
       <section className="py-24 bg-brand-muted border-b border-brand/10">
         <div className="max-w-[1100px] mx-auto px-6">
@@ -962,7 +949,7 @@ export default function App() {
             className="max-w-[560px]"
           >
             <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-brand mb-4">
-              Early access
+              Get started
             </p>
             <h2 className="text-[30px] md:text-[40px] font-bold text-slate-950 leading-[1.15] tracking-[-0.02em]">
               Stop leaving your money
@@ -970,15 +957,15 @@ export default function App() {
               with the bank.
             </h2>
             <p className="mt-4 text-[15px] text-slate-500 leading-relaxed">
-              Join the waitlist. Early members get priority access and a free
-              fee-line scan before the ₦2,000 full audit.
+              Upload a statement for a free fee-line scan, then run a ₦2,000
+              full audit when you&apos;re ready.
             </p>
 
             <Link
-              to="/waitlist"
+              to="/product"
               className="mt-8 inline-flex items-center gap-2 h-11 px-5 rounded-md bg-brand text-white text-[14px] font-medium hover:bg-brand-dark transition-colors"
             >
-              Join the waitlist <ArrowRight className="h-4 w-4" />
+              Start your audit <ArrowRight className="h-4 w-4" />
             </Link>
 
             <div className="mt-8 flex flex-wrap gap-4">
@@ -1082,10 +1069,10 @@ export default function App() {
                   Why trust us
                 </a>
                 <Link
-                  to="/waitlist"
+                  to="/product"
                   className="text-slate-500 hover:text-brand transition-colors"
                 >
-                  Join waitlist
+                  Start audit
                 </Link>
               </div>
               <div className="flex flex-col gap-3">

@@ -115,10 +115,9 @@ export default function Terms() {
       <Section title="5. Fees and Payment Terms">
         <SubSection title="5.1 Free Scan">
           <P>
-            KoboBack offers a free fee-line scan of your bank statement: a
-            count of fee-like lines by type. It does not include amounts,
-            verdicts, or a dispute letter. No payment is required for this
-            scan.
+            KoboBack offers a free fee scan of your bank statement: a count of
+            possible bank fees by type. It does not include amounts, verdicts,
+            or a dispute letter. No payment is required for this scan.
           </P>
         </SubSection>
 

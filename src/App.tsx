@@ -87,8 +87,8 @@ const steps = [
   {
     icon: Search,
     number: "02",
-    title: "We check fee lines against CBN rules",
-    desc: "First a free inventory of fee-like charges, then an advisory audit that flags lines that may not match Central Bank guidelines.",
+    title: "We check possible bank fees against CBN rules",
+    desc: "First a free fee scan that lists possible bank fees by type, then an advisory audit that flags charges that may not match Central Bank guidelines.",
   },
   {
     icon: FileText,
@@ -123,7 +123,7 @@ const trustPoints = [
   {
     icon: Banknote,
     title: "Transparent pricing",
-    desc: "Free fee-line scan. Pay ₦2,000 once per statement for a full audit.",
+    desc: "Free fee scan. Pay ₦2,000 once per statement for a full audit.",
   },
   //  Opt into managed recovery for 20% of what we get back — nothing more.
 ];
@@ -177,12 +177,12 @@ const faqs = [
   },
   {
     q: "How does KoboBack make money?",
-    a: "Upload and the fee-line scan are free. A full CBN audit report is ₦2,000 per statement, paid before the audit runs.",
+    a: "Uploading a statement and running the free fee scan cost nothing. A full CBN audit report is ₦2,000 per statement, paid before the audit runs.",
   },
   // If you want us to handle the recovery process for you, we charge 20% of the amount successfully recovered. No recovery, no fee on that tier.
   {
     q: "What if no errors are found in my statement?",
-    a: "The free scan still shows how many fee-like lines we found. If that count is zero, we will not ask you to pay. If you run a paid audit and nothing is flagged, that is still a valid outcome — your bank treated this statement fairly.",
+    a: "The free fee scan still shows how many possible bank fees we found. If that count is zero, we will not ask you to pay. If you run a paid audit and nothing is flagged, that is still a valid outcome — your bank treated this statement fairly.",
   },
   {
     q: "Do you work with the banks?",
@@ -385,8 +385,8 @@ export default function App() {
 
             {/* Sub-headline */}
             <p className="mt-6 text-[17px] text-slate-500 leading-relaxed max-w-[520px]">
-              Upload a Nigerian bank statement. We inventory fee-like lines,
-              compare them to CBN rules, and help you understand what may be
+              Upload a Nigerian bank statement. We find possible bank fees,
+              check them against CBN rules, and help you understand what may be
               recoverable — no bank login required.
             </p>
 
@@ -448,7 +448,7 @@ export default function App() {
           <div className="sm:pl-10">
             <Stat
               value="₦2,000"
-              label="One-time, per statement, after a free fee-line scan"
+              label="One-time, per statement, after a free fee scan"
             />
           </div>
         </motion.div>
@@ -799,16 +799,16 @@ export default function App() {
               </p>
               <p className="text-[13px] text-slate-400 mb-6">Always free</p>
               <p className="text-[15px] font-semibold text-slate-900 mb-2">
-                Fee-line scan
+                Free fee scan
               </p>
               <p className="text-[13px] text-slate-500 leading-relaxed mb-8">
-                Upload your bank statement. We count fee-like lines by type —
+                Upload your bank statement. We count possible bank fees by type —
                 SMS, stamp duty, NIP, and so on. No amounts, no verdicts, no
                 card.
               </p>
               <ul className="mt-auto space-y-2.5">
                 {[
-                  "Fee-line inventory by type",
+                  "Possible bank fees by type",
                   "No amounts or overcharge claims",
                   "No bank login required",
                 ].map((f) => (
@@ -957,7 +957,7 @@ export default function App() {
               with the bank.
             </h2>
             <p className="mt-4 text-[15px] text-slate-500 leading-relaxed">
-              Upload a statement for a free fee-line scan, then run a ₦2,000
+              Upload a statement for a free fee scan, then run a ₦2,000
               full audit when you&apos;re ready.
             </p>
 

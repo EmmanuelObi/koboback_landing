@@ -122,8 +122,8 @@ function ScanInventory({
       {showCount && (
         <p className="text-[13px] font-medium text-slate-950 mb-2">
           {scan.fee_line_count === 0
-            ? "No fee-like lines found"
-            : `${scan.fee_line_count.toLocaleString()} fee-like line${
+            ? "No possible bank fees found"
+            : `${scan.fee_line_count.toLocaleString()} fee charge${
                 scan.fee_line_count === 1 ? "" : "s"
               }`}
         </p>
@@ -167,8 +167,8 @@ function pageDescription(job: JobStatusResponse | null): string {
   }
   if (isReadyToAudit(job.status)) {
     return job.bank_name
-      ? `${job.bank_name} · Free fee-line scan ready`
-      : "Transactions extracted. Review the fee-line scan, then pay to audit if you want a full check.";
+      ? `${job.bank_name} · Free fee scan ready`
+      : "Transactions extracted. Review the free fee scan, then pay to audit if you want a full check.";
   }
   if (isParsingInProgress(job.status)) {
     return "Reading your statement and extracting transactions.";
@@ -459,7 +459,7 @@ export default function AuditJobPage() {
                   {canPay && scan ? (
                     <>
                       <p className="text-[15px] font-semibold text-slate-950 mb-1">
-                        We found {feeCount.toLocaleString()} fee-like charge
+                        We found {feeCount.toLocaleString()} possible bank fee
                         {feeCount === 1 ? "" : "s"} on this statement
                       </p>
                       <p className="text-[13px] text-slate-600 mb-5 leading-relaxed">
@@ -492,21 +492,21 @@ export default function AuditJobPage() {
                           ? "Scan complete"
                           : jobStatus.paid
                             ? "Ready for a fee audit"
-                            : "Fee-line scan"}
+                            : "Free fee scan"}
                       </p>
                       <p className="text-[13px] text-slate-600 mb-5 leading-relaxed">
                         Transactions are extracted
                         {txCount != null
                           ? ` (${txCount.toLocaleString()} found)`
                           : ""}
-                        . This inventory counts fee-like lines only — not amounts
+                        . This scan lists possible bank fees only — not amounts
                         or verdicts.
                       </p>
                       <ScanInventory scan={scan} />
                       {emptyScan && (
                         <p className="text-[13px] text-slate-600 mb-5 leading-relaxed">
-                          We didn’t find fee-like lines on this statement. A paid
-                          audit is unlikely to help here.
+                          We didn’t find possible bank fees on this statement. A
+                          paid audit is unlikely to help here.
                         </p>
                       )}
                     </>

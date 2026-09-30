@@ -172,7 +172,7 @@ export default function StatementsPage() {
         <PageHeader
           eyebrow="Statements"
           title="Your bank statements"
-          description="Upload a statement. A free scan counts fee-like lines. Pay ₦2,000 to run the full audit."
+          description="Upload a statement. A free fee scan counts possible bank fees. Pay ₦2,000 to run the full audit."
         />
 
         <JobFlowStepper status={null} className="mb-6" />
@@ -186,7 +186,7 @@ export default function StatementsPage() {
               Upload a statement
             </h2>
             <p className="text-[13px] text-slate-500 mt-1">
-              PDF, CSV, or Excel · max 10 MB. Extraction and a free fee-line
+              PDF, CSV, or Excel · max 10 MB. Extraction and a free fee
               scan start automatically.
             </p>
           </div>
@@ -355,7 +355,7 @@ export default function StatementsPage() {
                               ? ` · ${job.statement_period}`
                               : ""}
                             {typeof job.fee_line_count === "number"
-                              ? ` · ${job.fee_line_count} fee line${
+                              ? ` · ${job.fee_line_count} fee charge${
                                   job.fee_line_count === 1 ? "" : "s"
                                 }`
                               : ""}

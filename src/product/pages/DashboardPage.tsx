@@ -254,7 +254,7 @@ export default function DashboardPage() {
                             <p className="text-[12px] text-slate-500 truncate">
                               {job.bank_name ?? "Processing…"}
                               {typeof job.fee_line_count === "number"
-                                ? ` · ${job.fee_line_count} fee line${
+                                ? ` · ${job.fee_line_count} fee charge${
                                     job.fee_line_count === 1 ? "" : "s"
                                   }`
                                 : ""}
@@ -319,7 +319,7 @@ export default function DashboardPage() {
                               ? ` · ${job.statement_period}`
                               : ""}
                             {typeof job.fee_line_count === "number"
-                              ? ` · ${job.fee_line_count} fee line${
+                              ? ` · ${job.fee_line_count} fee charge${
                                   job.fee_line_count === 1 ? "" : "s"
                                 }`
                               : ""}

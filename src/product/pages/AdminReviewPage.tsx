@@ -30,6 +30,7 @@ import {
   type JobStatusResponse,
   type ParsedStatement,
 } from "../api/client";
+import { exportReportAsPdf } from "../utils/exportPdf";
 
 function parseApiError(err: unknown): string {
   if (
@@ -111,7 +112,7 @@ export default function AdminReviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState<
-    "save" | "approve" | "hold" | "reset" | "download" | null
+    "save" | "approve" | "hold" | "reset" | "download" | "download-report" | null
   >(null);
   const [showStatement, setShowStatement] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -233,6 +234,25 @@ export default function AdminReviewPage() {
     }
   };
 
+  const handleDownloadReport = () => {
+    if (!draft) {
+      toast("No audit report available to download yet.", "error");
+      return;
+    }
+    setSaving("download-report");
+    try {
+      exportReportAsPdf(draft);
+      toast("Audit PDF downloaded.", "success");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Could not export the audit PDF.";
+      setError(message);
+      toast(message, "error");
+    } finally {
+      setSaving(null);
+    }
+  };
+
   if (loading) {
     return (
       <ProductLayout>
@@ -337,6 +357,19 @@ export default function AdminReviewPage() {
                   <Download className="w-3.5 h-3.5" />
                 )}
                 Download original
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={handleDownloadReport}
+                disabled={!draft || saving === "download-report"}
+              >
+                {saving === "download-report" ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5" />
+                )}
+                Download audit PDF
               </Button>
               {statement && (
                 <Button

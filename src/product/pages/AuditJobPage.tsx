@@ -71,18 +71,63 @@ function parseApiError(err: unknown): string {
   return "Failed to load audit status. Please try again.";
 }
 
-function ScanInventory({ scan }: { scan: FeeScan | null | undefined }) {
+function formatCategoryPhrase(
+  category: string,
+  count: number,
+): string {
+  const label = SCAN_LABELS[category] ?? category;
+  if (count === 1) return `1 looks like ${label}`;
+  return `${count.toLocaleString()} look like ${label}`;
+}
+
+function feeScanSummary(
+  scan: FeeScan,
+  transactionCount: number | null,
+): string {
+  const entries = Object.entries(scan.by_category).sort((a, b) => b[1] - a[1]);
+  const categoryBit =
+    entries.length === 0
+      ? null
+      : entries.length === 1
+        ? formatCategoryPhrase(entries[0][0], entries[0][1])
+        : entries.length === 2
+          ? `${formatCategoryPhrase(entries[0][0], entries[0][1])} and ${formatCategoryPhrase(entries[1][0], entries[1][1])}`
+          : `${entries
+              .slice(0, -1)
+              .map(([cat, n]) => formatCategoryPhrase(cat, n))
+              .join(", ")}, and ${formatCategoryPhrase(
+              entries[entries.length - 1][0],
+              entries[entries.length - 1][1],
+            )}`;
+
+  const tx =
+    transactionCount != null
+      ? `${transactionCount.toLocaleString()} transactions extracted. `
+      : "";
+  const cats = categoryBit ? `${categoryBit}. ` : "";
+  return `${tx}${cats}Pay ₦2,000 once to check each one against CBN rules and see amounts, dates, and what may be recoverable.`;
+}
+
+function ScanInventory({
+  scan,
+  showCount = true,
+}: {
+  scan: FeeScan | null | undefined;
+  showCount?: boolean;
+}) {
   if (!scan) return null;
   const entries = Object.entries(scan.by_category).sort((a, b) => b[1] - a[1]);
   return (
     <div className="mb-5">
-      <p className="text-[13px] font-medium text-slate-950 mb-2">
-        {scan.fee_line_count === 0
-          ? "No fee-like lines found"
-          : `${scan.fee_line_count.toLocaleString()} fee-like line${
-              scan.fee_line_count === 1 ? "" : "s"
-            }`}
-      </p>
+      {showCount && (
+        <p className="text-[13px] font-medium text-slate-950 mb-2">
+          {scan.fee_line_count === 0
+            ? "No fee-like lines found"
+            : `${scan.fee_line_count.toLocaleString()} fee-like line${
+                scan.fee_line_count === 1 ? "" : "s"
+              }`}
+        </p>
+      )}
       {entries.length > 0 && (
         <ul className="flex flex-wrap gap-2">
           {entries.map(([category, count]) => (
@@ -406,47 +451,65 @@ export default function AuditJobPage() {
               );
               const canPay = needsPay && !emptyScan;
               const canRun = !needsPay;
+              const feeCount = scan?.fee_line_count ?? 0;
+              const txCount =
+                jobStatus.parsed_statement?.transactions.length ?? null;
               return (
                 <>
-                  <p className="text-[15px] font-semibold text-slate-950 mb-1">
-                    {emptyScan
-                      ? "Scan complete"
-                      : jobStatus.paid
-                        ? "Ready for a fee audit"
-                        : "Fee-line scan"}
-                  </p>
-                  <p className="text-[13px] text-slate-600 mb-5 leading-relaxed">
-                    Transactions are extracted
-                    {jobStatus.parsed_statement
-                      ? ` (${jobStatus.parsed_statement.transactions.length.toLocaleString()} found)`
-                      : ""}
-                    . This inventory counts fee-like lines only — not amounts
-                    or verdicts.
-                  </p>
-                  <ScanInventory scan={scan} />
-                  {emptyScan && (
-                    <p className="text-[13px] text-slate-600 mb-5 leading-relaxed">
-                      We didn’t find fee-like lines on this statement. A paid
-                      audit is unlikely to help here.
-                    </p>
-                  )}
-                  {canPay && (
-                    <div className="mb-1">
-                      <p className="text-[13px] text-slate-600 mb-4 leading-relaxed">
-                        Pay ₦2,000 once for this statement to run the full CBN
-                        fee audit.
+                  {canPay && scan ? (
+                    <>
+                      <p className="text-[15px] font-semibold text-slate-950 mb-1">
+                        We found {feeCount.toLocaleString()} fee-like charge
+                        {feeCount === 1 ? "" : "s"} on this statement
                       </p>
-                      <Button onClick={() => void handlePay()} disabled={paying}>
-                        {paying ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <>
-                            <CreditCard className="w-4 h-4" />
-                            Pay ₦2,000
-                          </>
-                        )}
-                      </Button>
-                    </div>
+                      <p className="text-[13px] text-slate-600 mb-5 leading-relaxed">
+                        {feeScanSummary(scan, txCount)}
+                      </p>
+                      <ScanInventory scan={scan} showCount={false} />
+                      <div className="mb-1">
+                        <Button
+                          onClick={() => void handlePay()}
+                          disabled={paying}
+                        >
+                          {paying ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <>
+                              <CreditCard className="w-4 h-4" />
+                              Unlock full CBN fee audit · ₦2,000
+                            </>
+                          )}
+                        </Button>
+                        <p className="text-[12px] text-slate-500 mt-3">
+                          One-time for this statement.
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-[15px] font-semibold text-slate-950 mb-1">
+                        {emptyScan
+                          ? "Scan complete"
+                          : jobStatus.paid
+                            ? "Ready for a fee audit"
+                            : "Fee-line scan"}
+                      </p>
+                      <p className="text-[13px] text-slate-600 mb-5 leading-relaxed">
+                        Transactions are extracted
+                        {txCount != null
+                          ? ` (${txCount.toLocaleString()} found)`
+                          : ""}
+                        . This inventory counts fee-like lines only — not amounts
+                        or verdicts.
+                      </p>
+                      <ScanInventory scan={scan} />
+                      {emptyScan && (
+                        <p className="text-[13px] text-slate-600 mb-5 leading-relaxed">
+                          We didn’t find fee-like lines on this statement. A paid
+                          audit is unlikely to help here.
+                        </p>
+                      )}
+                    </>
                   )}
                   {canRun && (
                     <>

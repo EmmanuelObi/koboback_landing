@@ -85,6 +85,9 @@ export interface JobSummary {
   fee_line_count?: number | null;
   paid?: boolean;
   payment_required?: boolean;
+  payment_reference?: string | null;
+  payment_amount_kobo?: number | null;
+  error?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -128,6 +131,7 @@ export interface MeResponse {
   user_id: string;
   email: string | null;
   is_admin: boolean;
+  is_super_admin?: boolean;
 }
 
 export interface AdminUserSummary {
@@ -136,6 +140,46 @@ export interface AdminUserSummary {
   job_count: number;
   pending_review_count: number;
   released_count: number;
+}
+
+export interface SuperOpsOverview {
+  total_jobs: number;
+  by_status: Record<string, number>;
+  distinct_users: number;
+  paid_jobs: number;
+  unpaid_jobs: number;
+  failed_last_24h: number;
+}
+
+export interface SuperOpsUserSummary {
+  user_id: string;
+  email: string | null;
+  job_count: number;
+  pending_review_count: number;
+  released_count: number;
+  paid_count: number;
+  unpaid_ready_count: number;
+  failed_count: number;
+  last_activity_at: string | null;
+}
+
+export interface SuperOpsParsedSummary {
+  bank_name: string | null;
+  account_name: string | null;
+  account_number: string | null;
+  statement_period: string | null;
+  currency: string | null;
+  transaction_count: number;
+  total_debits: number | null;
+  total_credits: number | null;
+  opening_balance: number | null;
+  closing_balance: number | null;
+}
+
+export interface SuperOpsJobDetail extends JobStatusResponse {
+  payment_reference?: string | null;
+  payment_amount_kobo?: number | null;
+  parsed_summary?: SuperOpsParsedSummary | null;
 }
 
 export interface FlaggedTransaction {
@@ -447,6 +491,48 @@ export async function holdAdminJob(
   const { data } = await api.post<JobStatusResponse>(
     `/admin/jobs/${jobId}/hold`,
     { notes: notes || null, report: report ?? null },
+  );
+  return data;
+}
+
+export async function getSuperOpsOverview(): Promise<SuperOpsOverview> {
+  const { data } = await api.get<SuperOpsOverview>("/super-ops/overview");
+  return data;
+}
+
+export async function listSuperOpsUsers(): Promise<{
+  users: SuperOpsUserSummary[];
+}> {
+  const { data } = await api.get<{ users: SuperOpsUserSummary[] }>(
+    "/super-ops/users",
+  );
+  return data;
+}
+
+export async function listSuperOpsJobs(params?: {
+  status?: JobStatus;
+  user_id?: string;
+  cursor?: string;
+  limit?: number;
+}): Promise<JobListResponse> {
+  const { data } = await api.get<JobListResponse>("/super-ops/jobs", {
+    params,
+  });
+  return data;
+}
+
+export async function getSuperOpsJob(
+  jobId: string,
+): Promise<SuperOpsJobDetail> {
+  const { data } = await api.get<SuperOpsJobDetail>(`/super-ops/jobs/${jobId}`);
+  return data;
+}
+
+export async function getSuperOpsStatementDownload(
+  jobId: string,
+): Promise<{ download_url: string; file_name: string; expires_in: number }> {
+  const { data } = await api.get(
+    `/super-ops/jobs/${jobId}/statement-download`,
   );
   return data;
 }

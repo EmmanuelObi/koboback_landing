@@ -18,6 +18,9 @@ import ReportPage from "./product/pages/ReportPage.tsx";
 import AdminRoute from "./product/components/AdminRoute.tsx";
 import AdminQueuePage from "./product/pages/AdminQueuePage.tsx";
 import AdminReviewPage from "./product/pages/AdminReviewPage.tsx";
+import SuperAdminRoute from "./product/components/SuperAdminRoute.tsx";
+import SuperOpsPage from "./product/pages/SuperOpsPage.tsx";
+import SuperOpsJobPage from "./product/pages/SuperOpsJobPage.tsx";
 import CookieBanner from "./components/CookieBanner.tsx";
 import VercelAnalytics from "./components/VercelAnalytics.tsx";
 import "./index.css";
@@ -102,6 +105,26 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 <AdminRoute>
                   <AdminReviewPage />
                 </AdminRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/product/super-ops"
+            element={
+              <ProtectedRoute>
+                <SuperAdminRoute>
+                  <SuperOpsPage />
+                </SuperAdminRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/product/super-ops/jobs/:jobId"
+            element={
+              <ProtectedRoute>
+                <SuperAdminRoute>
+                  <SuperOpsJobPage />
+                </SuperAdminRoute>
               </ProtectedRoute>
             }
           />

@@ -36,6 +36,7 @@ interface AuthContextValue {
   isConfigured: boolean;
   onboardingComplete: boolean;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   signUp: (
     email: string,
     password: string,
@@ -57,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   const loadProfile = useCallback(async (userId: string) => {
     if (!isSupabaseConfigured) {
@@ -115,15 +117,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (loading) return;
     if (isSupabaseConfigured && !user) {
       setIsAdmin(false);
+      setIsSuperAdmin(false);
       return;
     }
     let cancelled = false;
     getMe()
       .then((me) => {
-        if (!cancelled) setIsAdmin(me.is_admin);
+        if (!cancelled) {
+          setIsAdmin(me.is_admin);
+          setIsSuperAdmin(Boolean(me.is_super_admin));
+        }
       })
       .catch(() => {
-        if (!cancelled) setIsAdmin(false);
+        if (!cancelled) {
+          setIsAdmin(false);
+          setIsSuperAdmin(false);
+        }
       });
     return () => {
       cancelled = true;
@@ -223,6 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isConfigured: isSupabaseConfigured,
       onboardingComplete,
       isAdmin,
+      isSuperAdmin,
       signUp,
       signIn,
       resetPasswordForEmail,
@@ -238,6 +248,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profileLoading,
       onboardingComplete,
       isAdmin,
+      isSuperAdmin,
       signUp,
       signIn,
       resetPasswordForEmail,

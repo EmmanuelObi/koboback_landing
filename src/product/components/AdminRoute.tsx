@@ -3,9 +3,9 @@ import { useAuth } from "../context/AuthContext";
 import AuthLoadingScreen from "../ui/AuthLoadingScreen";
 
 export default function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { isAdmin, loading, isConfigured, user } = useAuth();
+  const { isAdmin, loading, rolesLoading, isConfigured, user } = useAuth();
 
-  if (loading) {
+  if (loading || rolesLoading) {
     return <AuthLoadingScreen message="Checking admin access…" />;
   }
 

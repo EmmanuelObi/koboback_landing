@@ -33,6 +33,8 @@ interface AuthContextValue {
   profile: UserProfile | null;
   loading: boolean;
   profileLoading: boolean;
+  /** True until /me role flags have resolved (or there is no user). */
+  rolesLoading: boolean;
   isConfigured: boolean;
   onboardingComplete: boolean;
   isAdmin: boolean;
@@ -59,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profileLoading, setProfileLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [rolesLoading, setRolesLoading] = useState(true);
 
   const loadProfile = useCallback(async (userId: string) => {
     if (!isSupabaseConfigured) {
@@ -118,9 +121,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isSupabaseConfigured && !user) {
       setIsAdmin(false);
       setIsSuperAdmin(false);
+      setRolesLoading(false);
       return;
     }
     let cancelled = false;
+    setRolesLoading(true);
     getMe()
       .then((me) => {
         if (!cancelled) {
@@ -133,6 +138,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsAdmin(false);
           setIsSuperAdmin(false);
         }
+      })
+      .finally(() => {
+        if (!cancelled) setRolesLoading(false);
       });
     return () => {
       cancelled = true;
@@ -229,6 +237,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       loading,
       profileLoading,
+      rolesLoading,
       isConfigured: isSupabaseConfigured,
       onboardingComplete,
       isAdmin,
@@ -246,6 +255,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       loading,
       profileLoading,
+      rolesLoading,
       onboardingComplete,
       isAdmin,
       isSuperAdmin,

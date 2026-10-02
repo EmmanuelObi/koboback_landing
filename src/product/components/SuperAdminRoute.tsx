@@ -8,9 +8,9 @@ export default function SuperAdminRoute({
 }: {
   children: React.ReactNode;
 }) {
-  const { isSuperAdmin, loading, isConfigured, user } = useAuth();
+  const { isSuperAdmin, loading, rolesLoading, isConfigured, user } = useAuth();
 
-  if (loading) {
+  if (loading || rolesLoading) {
     return <AuthLoadingScreen message="Checking access…" />;
   }
 

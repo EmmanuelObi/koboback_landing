@@ -248,40 +248,142 @@ export function validateStatementFile(file: File): string | null {
 
 const STATEMENT_MIME_TO_EXT: Record<string, string> = {
   "application/pdf": ".pdf",
+  "application/x-pdf": ".pdf",
+  "text/pdf": ".pdf",
   "text/csv": ".csv",
   "application/csv": ".csv",
+  "text/comma-separated-values": ".csv",
   "application/vnd.ms-excel": ".xls",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+  // Some Android apps label Office docs this way
+  "application/haansoftxlsx": ".xlsx",
+  "application/wps-office.xlsx": ".xlsx",
 };
 
 const STATEMENT_EXTENSIONS = new Set([".pdf", ".csv", ".xls", ".xlsx"]);
 
 function extensionOf(name: string): string {
   const i = name.lastIndexOf(".");
-  if (i < 0) return "";
+  if (i < 0 || i === name.length - 1) return "";
   return name.slice(i).toLowerCase();
 }
 
 function statementFileLooksValid(file: File): boolean {
   const ext = extensionOf(file.name);
   if (ext && STATEMENT_EXTENSIONS.has(ext)) return true;
-  const mime = (file.type || "").toLowerCase();
+  const mime = (file.type || "").toLowerCase().trim();
   if (mime && mime in STATEMENT_MIME_TO_EXT) return true;
   return false;
 }
 
-/** Ensure the File has a real extension so API/S3 metadata validation passes. */
-export function normalizeStatementFile(file: File): File {
-  const ext = extensionOf(file.name);
-  if (ext && STATEMENT_EXTENSIONS.has(ext)) return file;
+/** Sniff common statement formats from the first bytes (Android often omits type/ext). */
+async function sniffStatementExtension(file: File): Promise<string | null> {
+  try {
+    const buf = await file.slice(0, 16).arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    const asText = String.fromCharCode(...bytes);
 
-  const mime = (file.type || "").toLowerCase();
-  const mapped = STATEMENT_MIME_TO_EXT[mime];
+    if (asText.startsWith("%PDF")) return ".pdf";
+    // ZIP/XLSX
+    if (bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 0x03 && bytes[3] === 0x04) {
+      return ".xlsx";
+    }
+    // Old OLE XLS
+    if (
+      bytes[0] === 0xd0 &&
+      bytes[1] === 0xcf &&
+      bytes[2] === 0x11 &&
+      bytes[3] === 0xe0
+    ) {
+      return ".xls";
+    }
+    // Heuristic CSV: printable text with a comma/tab in the first line
+    const sample = asText.replace(/\0/g, "");
+    if (sample.length >= 8 && /[,\t;]/.test(sample) && /^[\x09\x0a\x0d\x20-\x7e]+$/.test(sample)) {
+      return ".csv";
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+/** Ensure the File has a real extension so API/S3 metadata validation passes. */
+export function normalizeStatementFile(file: File, forcedExt?: string): File {
+  const existing = extensionOf(file.name);
+  if (existing && STATEMENT_EXTENSIONS.has(existing)) {
+    return file.type
+      ? file
+      : new File([file], file.name, {
+          type: mimeForExt(existing),
+          lastModified: file.lastModified,
+        });
+  }
+
+  const mime = (file.type || "").toLowerCase().trim();
+  const mapped = forcedExt || STATEMENT_MIME_TO_EXT[mime];
   if (!mapped) return file;
 
-  const base = file.name.replace(/\.[^.]+$/, "").trim() || "statement";
+  const rawBase = file.name.replace(/\.[^.]+$/, "").trim();
+  const base =
+    rawBase && rawBase.toLowerCase() !== "blob" && !rawBase.includes("/")
+      ? rawBase
+      : "statement";
   return new File([file], `${base}${mapped}`, {
-    type: file.type || mime,
+    type: file.type || mimeForExt(mapped),
     lastModified: file.lastModified,
   });
+}
+
+function mimeForExt(ext: string): string {
+  switch (ext) {
+    case ".pdf":
+      return "application/pdf";
+    case ".csv":
+      return "text/csv";
+    case ".xls":
+      return "application/vnd.ms-excel";
+    case ".xlsx":
+      return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    default:
+      return "application/octet-stream";
+  }
+}
+
+/**
+ * Android Chrome often gives PDFs with empty `type` and no filename extension.
+ * Normalize + sniff so those still upload.
+ */
+export async function prepareStatementFile(
+  file: File,
+): Promise<{ file: File } | { error: string }> {
+  if (file.size === 0) {
+    return {
+      error: "That file looks empty. Please choose another statement export.",
+    };
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return {
+      error: "File is too large. Please upload a statement under 10 MB.",
+    };
+  }
+
+  let prepared = normalizeStatementFile(file);
+  if (!statementFileLooksValid(prepared)) {
+    const sniffed = await sniffStatementExtension(file);
+    if (sniffed) {
+      prepared = normalizeStatementFile(file, sniffed);
+    }
+  }
+
+  const validationError = validateStatementFile(prepared);
+  if (validationError) {
+    return {
+      error:
+        validationError === "Please upload a PDF, CSV, or Excel bank statement."
+          ? "Could not recognize that file on this device. Export or share the statement as a PDF, then choose it again."
+          : validationError,
+    };
+  }
+  return { file: prepared };
 }

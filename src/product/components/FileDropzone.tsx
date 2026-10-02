@@ -1,10 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { Upload, FileText, X } from "lucide-react";
 import { cn } from "../ui/tokens";
-import {
-  normalizeStatementFile,
-  validateStatementFile,
-} from "../lib/auditStatus";
+import { prepareStatementFile } from "../lib/auditStatus";
 
 interface FileDropzoneProps {
   onFileSelect: (file: File | null) => void;
@@ -17,9 +14,9 @@ interface FileDropzoneProps {
 /**
  * Mobile-safe statement picker.
  *
- * Critical: keep a real &lt;input type="file"&gt; inside a &lt;label&gt; and do not
- * call preventDefault / input.click(). Programmatic clicks and opacity-0
- * overlays frequently fail on iOS/Android (picker closes, no onChange).
+ * Android Chrome often breaks `display:none` file inputs (picker opens but
+ * onChange never fires). Keep the input visually hidden but layout-present,
+ * and sniff file bytes when Android omits MIME type / extension.
  */
 export default function FileDropzone({
   onFileSelect,
@@ -32,6 +29,7 @@ export default function FileDropzone({
   const [localName, setLocalName] = useState<string | null>(null);
   const [localSize, setLocalSize] = useState<number | null>(null);
   const [hint, setHint] = useState<string | null>(null);
+  const [preparing, setPreparing] = useState(false);
 
   const displayName = selectedName ?? localName;
   const hasSelection = Boolean(displayName);
@@ -45,19 +43,23 @@ export default function FileDropzone({
   );
 
   const acceptFile = useCallback(
-    (file: File) => {
-      const normalized = normalizeStatementFile(file);
-      const validationError = validateStatementFile(normalized);
-      if (validationError) {
-        setLocalName(null);
-        setLocalSize(null);
-        fail(validationError);
-        return;
+    async (file: File) => {
+      setPreparing(true);
+      try {
+        const result = await prepareStatementFile(file);
+        if ("error" in result) {
+          setLocalName(null);
+          setLocalSize(null);
+          fail(result.error);
+          return;
+        }
+        setHint(null);
+        setLocalName(result.file.name);
+        setLocalSize(result.file.size);
+        onFileSelect(result.file);
+      } finally {
+        setPreparing(false);
       }
-      setHint(null);
-      setLocalName(normalized.name);
-      setLocalSize(normalized.size);
-      onFileSelect(normalized);
     },
     [fail, onFileSelect],
   );
@@ -81,16 +83,16 @@ export default function FileDropzone({
       e.preventDefault();
       e.stopPropagation();
       setDragActive(false);
-      if (disabled) return;
+      if (disabled || preparing) return;
 
       const file = e.dataTransfer.files?.[0];
       if (!file) {
         fail("No file was dropped. Please choose a PDF, CSV, or Excel statement.");
         return;
       }
-      acceptFile(file);
+      void acceptFile(file);
     },
-    [acceptFile, disabled, fail],
+    [acceptFile, disabled, fail, preparing],
   );
 
   const handleChange = useCallback(
@@ -100,10 +102,10 @@ export default function FileDropzone({
       // Reset so the same path can be chosen again later.
       e.target.value = "";
       if (!file) {
-        // User cancelled the picker — stay quiet, keep empty state.
+        // User cancelled, or the picker returned nothing.
         return;
       }
-      acceptFile(file);
+      void acceptFile(file);
     },
     [acceptFile],
   );
@@ -152,7 +154,7 @@ export default function FileDropzone({
           <button
             type="button"
             onClick={clearFile}
-            disabled={disabled}
+            disabled={disabled || preparing}
             aria-label="Remove file"
             className="ml-2 p-1.5 rounded-md hover:bg-slate-100 transition shrink-0"
           >
@@ -171,34 +173,31 @@ export default function FileDropzone({
             PDF, CSV, or Excel · max 10 MB
           </p>
 
-          {/*
-            Native label wrapping the input is the most reliable mobile pattern.
-            Do not preventDefault or call input.click() programmatically.
-          */}
           <label
             className={cn(
-              "inline-flex items-center justify-center gap-2 rounded-md bg-brand px-4 py-2.5 text-[13px] font-semibold text-white",
-              disabled
+              "relative inline-flex items-center justify-center gap-2 rounded-md bg-brand px-4 py-2.5 text-[13px] font-semibold text-white overflow-hidden",
+              disabled || preparing
                 ? "pointer-events-none opacity-60"
                 : "cursor-pointer hover:opacity-95",
             )}
           >
-            Choose file
+            {preparing ? "Reading file…" : "Choose file"}
+            {/*
+              Do NOT use display:none / .hidden — Android Chrome often opens the
+              picker then never fires onChange. Keep the input opacity-0 but
+              covering the label hit area.
+            */}
             <input
               ref={inputRef}
               type="file"
-              // No accept= filter — Android/iOS often return empty file lists
-              // when the MIME/extension matrix is too strict. Validate in JS.
               onChange={handleChange}
-              disabled={disabled}
-              // display:none inside a label is fine and works on iOS; do NOT
-              // open via input.click() when the input is display:none.
-              className="hidden"
+              disabled={disabled || preparing}
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             />
           </label>
 
           {hint && (
-            <p className="mt-3 text-[12px] text-red-600 max-w-[280px]">{hint}</p>
+            <p className="mt-3 text-[12px] text-red-600 max-w-[320px]">{hint}</p>
           )}
         </div>
       )}

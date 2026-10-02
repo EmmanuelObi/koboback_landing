@@ -31,7 +31,7 @@ import {
   statusLabel,
   statusTone,
   userFacingJobMessage,
-  validateStatementFile,
+  prepareStatementFile,
 } from "../lib/auditStatus";
 
 function parseApiError(err: unknown): string {
@@ -111,9 +111,10 @@ export default function StatementsPage() {
 
   const startUpload = useCallback(
     async (selected: File) => {
-      const validationError = validateStatementFile(selected);
-      if (validationError) {
-        setError(validationError);
+      const prepared = await prepareStatementFile(selected);
+      if ("error" in prepared) {
+        setError(prepared.error);
+        toast(prepared.error, "error");
         return;
       }
 
@@ -121,7 +122,7 @@ export default function StatementsPage() {
       setError(null);
 
       try {
-        const uploaded = await uploadStatement(selected);
+        const uploaded = await uploadStatement(prepared.file);
         setFile(null);
         toast("Statement uploaded — extracting transactions…", "success");
         navigate(`/product/audit/${uploaded.job_id}`);

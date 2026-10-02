@@ -234,16 +234,54 @@ export function nextActionForJob(job: JobSummary): {
 }
 
 export function validateStatementFile(file: File): string | null {
-  const validExtensions = [".pdf", ".csv", ".xls", ".xlsx"];
-  const ext = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
-  if (!validExtensions.includes(ext)) {
-    return "Please upload a PDF, CSV, or Excel bank statement.";
-  }
   if (file.size === 0) {
     return "That file looks empty. Please choose another statement export.";
   }
   if (file.size > MAX_UPLOAD_BYTES) {
     return "File is too large. Please upload a statement under 10 MB.";
   }
+  if (!statementFileLooksValid(file)) {
+    return "Please upload a PDF, CSV, or Excel bank statement.";
+  }
   return null;
+}
+
+const STATEMENT_MIME_TO_EXT: Record<string, string> = {
+  "application/pdf": ".pdf",
+  "text/csv": ".csv",
+  "application/csv": ".csv",
+  "application/vnd.ms-excel": ".xls",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+};
+
+const STATEMENT_EXTENSIONS = new Set([".pdf", ".csv", ".xls", ".xlsx"]);
+
+function extensionOf(name: string): string {
+  const i = name.lastIndexOf(".");
+  if (i < 0) return "";
+  return name.slice(i).toLowerCase();
+}
+
+function statementFileLooksValid(file: File): boolean {
+  const ext = extensionOf(file.name);
+  if (ext && STATEMENT_EXTENSIONS.has(ext)) return true;
+  const mime = (file.type || "").toLowerCase();
+  if (mime && mime in STATEMENT_MIME_TO_EXT) return true;
+  return false;
+}
+
+/** Ensure the File has a real extension so API/S3 metadata validation passes. */
+export function normalizeStatementFile(file: File): File {
+  const ext = extensionOf(file.name);
+  if (ext && STATEMENT_EXTENSIONS.has(ext)) return file;
+
+  const mime = (file.type || "").toLowerCase();
+  const mapped = STATEMENT_MIME_TO_EXT[mime];
+  if (!mapped) return file;
+
+  const base = file.name.replace(/\.[^.]+$/, "").trim() || "statement";
+  return new File([file], `${base}${mapped}`, {
+    type: file.type || mime,
+    lastModified: file.lastModified,
+  });
 }

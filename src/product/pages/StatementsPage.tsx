@@ -65,6 +65,7 @@ export default function StatementsPage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
   const [actionJobId, setActionJobId] = useState<string | null>(null);
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const uploadSectionRef = useRef<HTMLDivElement | null>(null);
@@ -73,9 +74,9 @@ export default function StatementsPage() {
     try {
       const data = await listJobs();
       setJobs(data.jobs);
-      setError(null);
+      setListError(null);
     } catch {
-      setError("Could not load your statements.");
+      setListError("Could not load your statements.");
     } finally {
       setLoading(false);
     }
@@ -108,32 +109,42 @@ export default function StatementsPage() {
     };
   }, [hasProcessing, loadJobs]);
 
+  const startUpload = useCallback(
+    async (selected: File) => {
+      const validationError = validateStatementFile(selected);
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+
+      setUploading(true);
+      setError(null);
+
+      try {
+        const uploaded = await uploadStatement(selected);
+        setFile(null);
+        toast("Statement uploaded — extracting transactions…", "success");
+        navigate(`/product/audit/${uploaded.job_id}`);
+      } catch (err: unknown) {
+        setError(parseApiError(err));
+        setUploading(false);
+      }
+    },
+    [navigate, toast],
+  );
+
   const handleFileSelect = (f: File | null) => {
     setFile(f);
-    if (f) setError(null);
+    if (!f) return;
+    setError(null);
+    toast(`Selected ${f.name} — uploading…`, "info");
+    void startUpload(f);
   };
 
-  const handleUpload = useCallback(async () => {
-    if (!file) return;
-    const validationError = validateStatementFile(file);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
-    setUploading(true);
-    setError(null);
-
-    try {
-      const uploaded = await uploadStatement(file);
-      setFile(null);
-      toast("Statement uploaded — extracting transactions…", "success");
-      navigate(`/product/audit/${uploaded.job_id}`);
-    } catch (err: unknown) {
-      setError(parseApiError(err));
-      setUploading(false);
-    }
-  }, [file, navigate, toast]);
+  const handleUpload = useCallback(() => {
+    if (!file || uploading) return;
+    void startUpload(file);
+  }, [file, uploading, startUpload]);
 
   const handleAudit = (jobId: string) => {
     navigate(`/product/audit/${jobId}`);
@@ -186,14 +197,17 @@ export default function StatementsPage() {
               Upload a statement
             </h2>
             <p className="text-[13px] text-slate-500 mt-1">
-              PDF, CSV, or Excel · max 10 MB. Extraction and a free fee
-              scan start automatically.
+              PDF, CSV, or Excel · max 10 MB. Upload starts as soon as you
+              choose a file; extraction and a free fee scan follow.
             </p>
           </div>
 
           <FileDropzone
             onFileSelect={handleFileSelect}
-            onValidationError={setError}
+            onValidationError={(message) => {
+              setError(message);
+              toast(message, "error");
+            }}
             disabled={uploading}
             selectedName={file?.name ?? null}
           />
@@ -205,15 +219,18 @@ export default function StatementsPage() {
             </div>
           )}
 
-          {file && (
+          {(file || uploading) && (
             <div className="mt-4">
-              <Button fullWidth onClick={handleUpload} disabled={uploading}>
+              <Button fullWidth onClick={handleUpload} disabled={uploading || !file}>
                 {uploading ? (
-                  <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  <>
+                    <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    Uploading…
+                  </>
                 ) : (
                   <>
                     <UploadIcon className="w-4 h-4" />
-                    Upload & continue
+                    Retry upload
                   </>
                 )}
               </Button>
@@ -232,6 +249,13 @@ export default function StatementsPage() {
             </span>
           )}
         </div>
+
+        {listError && (
+          <div className="mb-4 text-[13px] text-red-700 bg-red-50 border border-red-200 rounded-md px-4 py-3 flex items-start gap-3">
+            <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <p>{listError}</p>
+          </div>
+        )}
 
         {loading && <StatementListSkeleton />}
 

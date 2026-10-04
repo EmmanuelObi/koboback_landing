@@ -133,12 +133,12 @@ export default function StatementsPage() {
       setFile(null);
       return;
     }
-    // Dropzone already prepares Android-safe payloads.
+    // Dropzone prepares the payload; keep selection visible so Android users
+    // can confirm the file stuck before upload starts.
     if ("body" in f && "filename" in f) {
       setFile(f);
       setError(null);
-      toast(`Selected ${f.filename} — uploading…`, "info");
-      void startUpload(f);
+      toast(`Selected ${f.filename}. Tap Upload to continue.`, "success");
       return;
     }
     setError("Could not read that file. Please try again.");
@@ -200,8 +200,8 @@ export default function StatementsPage() {
               Upload a statement
             </h2>
             <p className="text-[13px] text-slate-500 mt-1">
-              PDF, CSV, or Excel · max 10 MB. Upload starts as soon as you
-              choose a file; extraction and a free fee scan follow.
+              PDF, CSV, or Excel · max 10 MB. Choose a file, then tap Upload.
+              Extraction and a free fee scan follow.
             </p>
           </div>
 
@@ -222,23 +222,21 @@ export default function StatementsPage() {
             </div>
           )}
 
-          {(file || uploading) && (
-            <div className="mt-4">
-              <Button fullWidth onClick={handleUpload} disabled={uploading || !file}>
-                {uploading ? (
-                  <>
-                    <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                    Uploading…
-                  </>
-                ) : (
-                  <>
-                    <UploadIcon className="w-4 h-4" />
-                    Retry upload
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
+          <div className="mt-4">
+            <Button fullWidth onClick={handleUpload} disabled={uploading || !file}>
+              {uploading ? (
+                <>
+                  <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  Uploading…
+                </>
+              ) : (
+                <>
+                  <UploadIcon className="w-4 h-4" />
+                  {file ? "Upload statement" : "Choose a file first"}
+                </>
+              )}
+            </Button>
+          </div>
         </section>
 
         <div className="flex items-center justify-between mb-3">

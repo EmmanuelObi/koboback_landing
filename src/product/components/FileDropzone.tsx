@@ -1,4 +1,4 @@
-import { useCallback, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Upload, FileText, X } from "lucide-react";
 import { cn } from "../ui/tokens";
 import {
@@ -15,12 +15,11 @@ interface FileDropzoneProps {
 }
 
 /**
- * Mobile-safe statement picker tuned for Android Chrome.
+ * Statement file picker.
  *
- * Critical Android behaviors we work around:
- * - Programmatic input.click() can open a picker that never delivers a file
- * - Resetting input.value in the same tick can invalidate the File blob
- * - display:none / 1×1 inputs are unreliable; use a label + full-size opacity overlay
+ * Uses a visible native <input type="file"> — custom overlay / label / .click()
+ * hacks are unreliable on Android Chrome (picker opens, no change event).
+ * Also recovers the File on window focus if change was skipped.
  */
 export default function FileDropzone({
   onFileSelect,
@@ -28,13 +27,18 @@ export default function FileDropzone({
   disabled,
   selectedName,
 }: FileDropzoneProps) {
-  const inputId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const pickerArmedRef = useRef(false);
+  const changeHandledRef = useRef(false);
+  const acceptFileRef = useRef<(file: File) => Promise<void>>(async () => {});
+  const failRef = useRef<(message: string) => void>(() => {});
+
   const [dragActive, setDragActive] = useState(false);
   const [localName, setLocalName] = useState<string | null>(null);
   const [localSize, setLocalSize] = useState<number | null>(null);
   const [hint, setHint] = useState<string | null>(null);
   const [preparing, setPreparing] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
 
   const displayName = selectedName ?? localName;
   const hasSelection = Boolean(displayName);
@@ -42,6 +46,7 @@ export default function FileDropzone({
   const fail = useCallback(
     (message: string) => {
       setHint(message);
+      setStatus(null);
       onValidationError?.(message);
     },
     [onValidationError],
@@ -51,6 +56,7 @@ export default function FileDropzone({
     async (file: File) => {
       setPreparing(true);
       setHint(null);
+      setStatus(`Reading ${file.name || "file"}…`);
       try {
         const result = await prepareStatementFile(file);
         if ("error" in result) {
@@ -61,16 +67,90 @@ export default function FileDropzone({
         }
         setLocalName(result.filename);
         setLocalSize(result.size);
+        setStatus(`Ready: ${result.filename} (${(result.size / 1024).toFixed(1)} KB)`);
         onFileSelect(result);
       } finally {
         setPreparing(false);
-        // Only clear AFTER the bytes are fully read — clearing earlier can
-        // empty the File on Android Chrome.
-        if (inputRef.current) inputRef.current.value = "";
+        pickerArmedRef.current = false;
       }
     },
     [fail, onFileSelect],
   );
+
+  acceptFileRef.current = acceptFile;
+  failRef.current = fail;
+
+  // Native listeners — more reliable than React synthetic events on some Android builds.
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+
+    const onChange = () => {
+      changeHandledRef.current = true;
+      pickerArmedRef.current = false;
+      const file = input.files?.[0] ?? null;
+      if (!file) {
+        failRef.current(
+          "No file was received from this device. Open the statement from Files → Downloads, then choose it again.",
+        );
+        return;
+      }
+      void acceptFileRef.current(file);
+    };
+
+    const onPickIntent = () => {
+      pickerArmedRef.current = true;
+      changeHandledRef.current = false;
+      setHint(null);
+      setStatus("Waiting for file…");
+    };
+
+    input.addEventListener("change", onChange);
+    input.addEventListener("click", onPickIntent);
+    input.addEventListener("focus", onPickIntent);
+
+    return () => {
+      input.removeEventListener("change", onChange);
+      input.removeEventListener("click", onPickIntent);
+      input.removeEventListener("focus", onPickIntent);
+    };
+  }, []);
+
+  // Android sometimes returns from the picker without firing change.
+  useEffect(() => {
+    const recover = () => {
+      if (!pickerArmedRef.current || changeHandledRef.current) return;
+
+      window.setTimeout(() => {
+        if (!pickerArmedRef.current || changeHandledRef.current) return;
+        pickerArmedRef.current = false;
+
+        const file = inputRef.current?.files?.[0] ?? null;
+        if (file) {
+          changeHandledRef.current = true;
+          void acceptFileRef.current(file);
+          return;
+        }
+
+        // Soft hint only — cancelling the picker also hits this path.
+        setHint(
+          "No file received. If you selected one, open it from Files → Downloads and try again.",
+        );
+        setStatus(null);
+      }, 500);
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") recover();
+    };
+
+    window.addEventListener("focus", recover);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", recover);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
 
   const handleDrag = useCallback(
     (e: React.DragEvent) => {
@@ -103,28 +183,13 @@ export default function FileDropzone({
     [acceptFile, disabled, fail, preparing],
   );
 
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const list = e.target.files;
-      const file = list && list.length > 0 ? list[0] : null;
-      // Do NOT clear input.value here — Android may invalidate the File.
-      if (!file) {
-        fail(
-          "No file was received from this device. Open the statement from Files → Downloads, then tap Choose file again.",
-        );
-        return;
-      }
-      void acceptFile(file);
-    },
-    [acceptFile, fail],
-  );
-
   const clearFile = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setLocalName(null);
     setLocalSize(null);
     setHint(null);
+    setStatus(null);
     if (inputRef.current) inputRef.current.value = "";
     onFileSelect(null);
   };
@@ -171,42 +236,37 @@ export default function FileDropzone({
           </button>
         </div>
       ) : (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center w-full">
           <div className="mx-auto mb-4 h-11 w-11 rounded-md bg-slate-100 flex items-center justify-center">
             <Upload className="w-5 h-5 text-slate-500" />
           </div>
           <p className="text-[14px] text-slate-700 font-medium">
-            {preparing ? "Reading file…" : "Tap to choose your statement"}
+            {preparing ? "Reading file…" : "Choose your statement"}
           </p>
           <p className="text-[13px] text-slate-400 mt-1.5 mb-4">
             PDF, CSV, or Excel · max 10 MB
           </p>
 
           {/*
-            Native <label htmlFor> + full-size opacity input. Do not use
-            button + input.click() — Android Chrome often returns no file.
+            Visible native control — no opacity overlay, no label hack, no .click().
+            This is the reliable path on Android Chrome.
           */}
-          <label
-            htmlFor={inputId}
+          <input
+            id="koboback-statement-file"
+            ref={inputRef}
+            type="file"
+            disabled={disabled || preparing}
             className={cn(
-              "relative inline-flex min-h-[44px] min-w-[140px] items-center justify-center overflow-hidden rounded-md bg-brand px-4 py-2.5 text-[13px] font-semibold text-white",
-              disabled || preparing
-                ? "pointer-events-none opacity-60"
-                : "cursor-pointer hover:opacity-95",
+              "block w-full max-w-sm text-[13px] text-slate-600",
+              "file:mr-3 file:inline-flex file:cursor-pointer file:rounded-md file:border-0",
+              "file:bg-brand file:px-4 file:py-2.5 file:text-[13px] file:font-semibold file:text-white",
+              "disabled:opacity-60",
             )}
-          >
-            {preparing ? "Reading…" : "Choose file"}
-            <input
-              id={inputId}
-              ref={inputRef}
-              type="file"
-              onChange={handleChange}
-              disabled={disabled || preparing}
-              className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
-              // Intentionally no accept= — Android Downloads often lack MIME/ext.
-            />
-          </label>
+          />
 
+          {status && !hint && (
+            <p className="mt-3 text-[12px] text-slate-500 max-w-[320px]">{status}</p>
+          )}
           {hint && (
             <p className="mt-3 text-[12px] text-red-600 max-w-[320px]">{hint}</p>
           )}

@@ -9,12 +9,24 @@ export default function ProtectedRoute({
   children: React.ReactNode;
   requireOnboarding?: boolean;
 }) {
-  const { user, loading, isConfigured, profileLoading, onboardingComplete } =
-    useAuth();
+  const {
+    user,
+    loading,
+    isConfigured,
+    profile,
+    profileLoading,
+    onboardingComplete,
+  } = useAuth();
   const location = useLocation();
   const isOnboardingRoute = location.pathname === "/product/onboarding";
 
-  if (loading || (isConfigured && user && profileLoading)) {
+  // Only block on the initial auth/profile load. A profile refresh (common when
+  // Android returns from the file picker) must NOT unmount the page — that
+  // destroys in-progress file selection / upload state.
+  if (loading) {
+    return <AuthLoadingScreen message="Loading your workspace…" />;
+  }
+  if (isConfigured && user && profileLoading && !profile) {
     return <AuthLoadingScreen message="Loading your workspace…" />;
   }
 

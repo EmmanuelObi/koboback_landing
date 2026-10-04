@@ -21,8 +21,7 @@ export default function FileDropzone({
   const [localName, setLocalName] = useState<string | null>(null);
   const [localSize, setLocalSize] = useState<number | null>(null);
 
-  // Use || not ?? — Android often gives file.name === "", which must not
-  // wipe a good localName / look like “no selection”.
+  // Use || not ?? — Android often gives file.name === "".
   const displayName = selectedName || localName;
   const hasSelection = Boolean(displayName);
 
@@ -64,7 +63,9 @@ export default function FileDropzone({
       if (disabled) return;
       const file = e.dataTransfer.files?.[0];
       if (!file) {
-        onValidationError?.("No file was dropped.");
+        onValidationError?.(
+          "No file was dropped. Please choose a PDF, CSV, or Excel statement.",
+        );
         return;
       }
       acceptFile(file);
@@ -74,10 +75,8 @@ export default function FileDropzone({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
-    if (!file) {
-      onValidationError?.("No file was selected.");
-      return;
-    }
+    e.target.value = "";
+    if (!file) return;
     acceptFile(file);
   };
 
@@ -113,10 +112,12 @@ export default function FileDropzone({
             <p className="text-[14px] font-medium text-slate-950 truncate">
               {displayName}
             </p>
-            {localSize != null && (
+            {localSize != null ? (
               <p className="text-[13px] text-slate-500">
                 {(localSize / 1024).toFixed(1)} KB
               </p>
+            ) : (
+              <p className="text-[13px] text-slate-500">Ready to upload</p>
             )}
           </div>
           <button
@@ -130,24 +131,38 @@ export default function FileDropzone({
           </button>
         </div>
       ) : (
-        <div className="flex flex-col items-center w-full">
+        <div className="flex flex-col items-center">
           <div className="mx-auto mb-4 h-11 w-11 rounded-md bg-slate-100 flex items-center justify-center">
             <Upload className="w-5 h-5 text-slate-500" />
           </div>
           <p className="text-[14px] text-slate-700 font-medium">
-            Choose your statement
+            Drop your statement here
           </p>
           <p className="text-[13px] text-slate-400 mt-1.5 mb-4">
             PDF, CSV, or Excel · max 10 MB
           </p>
-          {/* Visible native input — hidden/sr-only inputs break on Android Chrome. */}
-          <input
-            ref={inputRef}
-            type="file"
-            onChange={handleChange}
-            disabled={disabled}
-            className="block w-full max-w-sm text-[13px] text-slate-600"
-          />
+
+          <label
+            className={cn(
+              "relative inline-flex min-h-[44px] min-w-[140px] items-center justify-center overflow-hidden rounded-md bg-brand px-4 py-2.5 text-[13px] font-semibold text-white",
+              disabled
+                ? "pointer-events-none opacity-60"
+                : "cursor-pointer hover:opacity-95",
+            )}
+          >
+            Choose file
+            {/*
+              Opacity overlay (not display:none / sr-only). Auth remount was the
+              real Android bug; keep the input layout-present for the picker.
+            */}
+            <input
+              ref={inputRef}
+              type="file"
+              onChange={handleChange}
+              disabled={disabled}
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            />
+          </label>
         </div>
       )}
     </div>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ExternalLink, Upload, FileText, X } from "lucide-react";
 import { cn } from "../ui/tokens";
 import {
+  prepareStatementBytes,
   prepareStatementFile,
   type PreparedStatementUpload,
 } from "../lib/auditStatus";
@@ -15,26 +16,22 @@ interface FileDropzoneProps {
   onFileSelect: (file: File | PreparedStatementUpload | null) => void;
   onValidationError?: (message: string) => void;
   disabled?: boolean;
-  /** Parent-controlled selected filename (drives selected UI) */
   selectedName?: string | null;
 }
 
-function emptyFileMessage(info: UploadBrowserInfo): string {
+function androidAttachHelp(info: UploadBrowserInfo): string {
   if (info.restricted) {
-    return `This ${info.appName ?? "in-app browser"} cannot attach files on Android. Open KoboBack in Chrome, then choose the file again.`;
+    return `Uploads often fail inside ${info.appName ?? "this in-app browser"}. Tap Open in Chrome, then choose the file from Files → Downloads.`;
   }
-  if (info.isAndroid) {
-    return "Android did not attach the file (browser shows “No file chosen”). Open this page in Chrome — not WhatsApp/Instagram/Gmail — then pick the file from Files → Downloads.";
-  }
-  return "No file was received. Please choose the statement again.";
+  return "Could not attach that file. Save the statement to Files → Downloads (not Drive/WhatsApp), then choose it again. If it still fails, try Desktop site off and retry.";
 }
 
 /**
- * Statement file picker.
+ * Statement file picker — Android Chrome safe.
  *
- * Uses a visible native <input type="file">. On Android, many in-app browsers
- * open a picker but never populate the input (“No file chosen”) — we detect
- * that and push users into real Chrome.
+ * Critical: do NOT call setState while the OS picker is open. A re-render can
+ * replace the <input> and Android Chrome then returns “No file chosen”.
+ * Also keep the input mounted at all times and read bytes before any setState.
  */
 export default function FileDropzone({
   onFileSelect,
@@ -44,142 +41,173 @@ export default function FileDropzone({
 }: FileDropzoneProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const pickerArmedRef = useRef(false);
-  const changeHandledRef = useRef(false);
-  const acceptFileRef = useRef<(file: File) => Promise<void>>(async () => {});
-  const failRef = useRef<(message: string) => void>(() => {});
+  const handledRef = useRef(false);
+  const pollTimerRef = useRef<number | null>(null);
   const browserInfoRef = useRef<UploadBrowserInfo>(getUploadBrowserInfo());
+  const onFileSelectRef = useRef(onFileSelect);
+  const onValidationErrorRef = useRef(onValidationError);
 
   const [dragActive, setDragActive] = useState(false);
   const [localName, setLocalName] = useState<string | null>(null);
   const [localSize, setLocalSize] = useState<number | null>(null);
   const [hint, setHint] = useState<string | null>(null);
   const [preparing, setPreparing] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
   const [browserInfo, setBrowserInfo] = useState<UploadBrowserInfo>(() =>
     getUploadBrowserInfo(),
   );
-  const [showOpenChrome, setShowOpenChrome] = useState(false);
 
   const displayName = selectedName ?? localName;
   const hasSelection = Boolean(displayName);
 
-  const fail = useCallback(
-    (message: string) => {
-      setHint(message);
-      setStatus(null);
-      setShowOpenChrome(
-        browserInfoRef.current.isAndroid || browserInfoRef.current.restricted,
-      );
-      onValidationError?.(message);
-    },
-    [onValidationError],
-  );
+  onFileSelectRef.current = onFileSelect;
+  onValidationErrorRef.current = onValidationError;
 
-  const acceptFile = useCallback(
-    async (file: File) => {
-      setPreparing(true);
-      setHint(null);
-      setShowOpenChrome(false);
-      setStatus(`Reading ${file.name || "file"}…`);
-      try {
-        const result = await prepareStatementFile(file);
-        if ("error" in result) {
-          setLocalName(null);
-          setLocalSize(null);
-          fail(result.error);
-          return;
-        }
-        setLocalName(result.filename);
-        setLocalSize(result.size);
-        setStatus(
-          `Ready: ${result.filename} (${(result.size / 1024).toFixed(1)} KB)`,
-        );
-        onFileSelect(result);
-      } finally {
+  const clearPoll = () => {
+    if (pollTimerRef.current != null) {
+      window.clearTimeout(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+  };
+
+  const fail = useCallback((message: string) => {
+    setHint(message);
+    onValidationErrorRef.current?.(message);
+  }, []);
+
+  const commitPrepared = useCallback(
+    (result: PreparedStatementUpload | { error: string }) => {
+      if ("error" in result) {
+        setLocalName(null);
+        setLocalSize(null);
         setPreparing(false);
-        pickerArmedRef.current = false;
+        fail(result.error);
+        return;
       }
+      setLocalName(result.filename);
+      setLocalSize(result.size);
+      setHint(null);
+      setPreparing(false);
+      onFileSelectRef.current(result);
     },
-    [fail, onFileSelect],
+    [fail],
   );
 
-  acceptFileRef.current = acceptFile;
-  failRef.current = fail;
+  const ingestFile = useCallback(
+    async (file: File) => {
+      if (handledRef.current) return;
+      handledRef.current = true;
+      pickerArmedRef.current = false;
+      clearPoll();
+
+      // Read bytes BEFORE any setState — Android may revoke the File after render.
+      let bytes: ArrayBuffer;
+      try {
+        bytes = await file.arrayBuffer();
+        if (bytes.byteLength === 0) {
+          bytes = await new Promise<ArrayBuffer>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              if (reader.result instanceof ArrayBuffer) resolve(reader.result);
+              else reject(new Error("empty"));
+            };
+            reader.onerror = () => reject(reader.error ?? new Error("read"));
+            reader.readAsArrayBuffer(file);
+          });
+        }
+      } catch {
+        handledRef.current = false;
+        setPreparing(false);
+        fail(androidAttachHelp(browserInfoRef.current));
+        return;
+      }
+
+      setPreparing(true);
+      commitPrepared(
+        prepareStatementBytes(bytes, file.name || "statement", file.type || ""),
+      );
+    },
+    [commitPrepared, fail],
+  );
+
+  const ingestFileRef = useRef(ingestFile);
+  ingestFileRef.current = ingestFile;
 
   useEffect(() => {
     const info = getUploadBrowserInfo();
     browserInfoRef.current = info;
     setBrowserInfo(info);
-    if (info.restricted) {
-      setShowOpenChrome(true);
-      setHint(
-        `Uploads usually fail inside ${info.appName ?? "this in-app browser"} on Android. Open KoboBack in Chrome first.`,
-      );
-    }
   }, []);
 
   useEffect(() => {
     const input = inputRef.current;
     if (!input) return;
 
+    const armPicker = () => {
+      // Intentionally no setState here — re-rendering during the picker breaks
+      // Android Chrome file delivery.
+      pickerArmedRef.current = true;
+      handledRef.current = false;
+      clearPoll();
+    };
+
     const onChange = () => {
-      changeHandledRef.current = true;
-      pickerArmedRef.current = false;
       const file = input.files?.[0] ?? null;
       if (!file) {
-        failRef.current(emptyFileMessage(browserInfoRef.current));
+        // Empty change: poll briefly in case the FileList fills late.
+        schedulePoll();
         return;
       }
-      void acceptFileRef.current(file);
+      void ingestFileRef.current(file);
     };
 
-    const onPickIntent = () => {
-      pickerArmedRef.current = true;
-      changeHandledRef.current = false;
-      setHint(null);
-      setStatus("Waiting for file…");
-    };
+    const schedulePoll = () => {
+      clearPoll();
+      const delays = [0, 200, 500, 1000, 2000];
+      let i = 0;
 
-    input.addEventListener("change", onChange);
-    input.addEventListener("click", onPickIntent);
-
-    return () => {
-      input.removeEventListener("change", onChange);
-      input.removeEventListener("click", onPickIntent);
-    };
-  }, []);
-
-  useEffect(() => {
-    const recover = () => {
-      if (!pickerArmedRef.current || changeHandledRef.current) return;
-
-      window.setTimeout(() => {
-        if (!pickerArmedRef.current || changeHandledRef.current) return;
-        pickerArmedRef.current = false;
-
+      const step = () => {
+        if (handledRef.current) return;
         const file = inputRef.current?.files?.[0] ?? null;
         if (file) {
-          changeHandledRef.current = true;
-          void acceptFileRef.current(file);
+          void ingestFileRef.current(file);
           return;
         }
+        i += 1;
+        if (i >= delays.length) {
+          if (pickerArmedRef.current) {
+            pickerArmedRef.current = false;
+            fail(androidAttachHelp(browserInfoRef.current));
+          }
+          return;
+        }
+        pollTimerRef.current = window.setTimeout(step, delays[i]! - delays[i - 1]!);
+      };
 
-        // Native control still says "No file chosen" — browser never got the file.
-        failRef.current(emptyFileMessage(browserInfoRef.current));
-      }, 500);
+      pollTimerRef.current = window.setTimeout(step, delays[0]);
+    };
+
+    const onFocusReturn = () => {
+      if (!pickerArmedRef.current || handledRef.current) return;
+      schedulePoll();
     };
 
     const onVisibility = () => {
-      if (document.visibilityState === "visible") recover();
+      if (document.visibilityState === "visible") onFocusReturn();
     };
 
-    window.addEventListener("focus", recover);
+    input.addEventListener("change", onChange);
+    input.addEventListener("click", armPicker);
+    window.addEventListener("focus", onFocusReturn);
     document.addEventListener("visibilitychange", onVisibility);
+
     return () => {
-      window.removeEventListener("focus", recover);
+      clearPoll();
+      input.removeEventListener("change", onChange);
+      input.removeEventListener("click", armPicker);
+      window.removeEventListener("focus", onFocusReturn);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, []);
+  }, [fail]);
 
   const handleDrag = useCallback(
     (e: React.DragEvent) => {
@@ -196,7 +224,7 @@ export default function FileDropzone({
   );
 
   const handleDrop = useCallback(
-    (e: React.DragEvent) => {
+    async (e: React.DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
       setDragActive(false);
@@ -207,9 +235,10 @@ export default function FileDropzone({
         fail("No file was dropped. Please choose a PDF, CSV, or Excel statement.");
         return;
       }
-      void acceptFile(file);
+      setPreparing(true);
+      commitPrepared(await prepareStatementFile(file));
     },
-    [acceptFile, disabled, fail, preparing],
+    [commitPrepared, disabled, fail, preparing],
   );
 
   const clearFile = (e: React.MouseEvent) => {
@@ -218,7 +247,7 @@ export default function FileDropzone({
     setLocalName(null);
     setLocalSize(null);
     setHint(null);
-    setStatus(null);
+    handledRef.current = false;
     if (inputRef.current) inputRef.current.value = "";
     onFileSelect(null);
   };
@@ -239,17 +268,14 @@ export default function FileDropzone({
       onDragOver={handleDrag}
       onDrop={handleDrop}
     >
-      {showOpenChrome && !hasSelection && (
+      {browserInfo.restricted && !hasSelection && (
         <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-left">
           <p className="text-[13px] font-medium text-amber-950">
-            {browserInfo.restricted
-              ? `Open in Chrome to upload`
-              : `If you see “No file chosen”, open Chrome`}
+            Open in Chrome to upload
           </p>
           <p className="mt-1 text-[12px] text-amber-900/80">
-            {browserInfo.restricted
-              ? `${browserInfo.appName ?? "This app"}’s built-in browser on Android often cannot attach PDFs. Use Chrome (or your default browser).`
-              : `Android in-app browsers (WhatsApp, Instagram, Gmail, etc.) open the file picker but leave “No file chosen”.`}
+            {browserInfo.appName ?? "This app"}’s built-in browser on Android
+            often cannot attach PDFs.
           </p>
           <button
             type="button"
@@ -296,27 +322,37 @@ export default function FileDropzone({
             {preparing ? "Reading file…" : "Choose your statement"}
           </p>
           <p className="text-[13px] text-slate-400 mt-1.5 mb-4">
-            PDF, CSV, or Excel · max 10 MB
+            PDF, CSV, or Excel · max 10 MB · prefer Files → Downloads
           </p>
+        </div>
+      )}
 
-          <input
-            id="koboback-statement-file"
-            ref={inputRef}
-            type="file"
-            disabled={disabled || preparing}
-            className={cn(
-              "block w-full max-w-sm text-[13px] text-slate-600",
-              "file:mr-3 file:inline-flex file:cursor-pointer file:rounded-md file:border-0",
-              "file:bg-brand file:px-4 file:py-2.5 file:text-[13px] file:font-semibold file:text-white",
-              "disabled:opacity-60",
-            )}
-          />
+      {/* Always mounted — unmounting after pick breaks Chromium file delivery. */}
+      <input
+        id="koboback-statement-file"
+        ref={inputRef}
+        type="file"
+        disabled={disabled || preparing}
+        className={cn(
+          hasSelection
+            ? "absolute h-px w-px opacity-0 pointer-events-none"
+            : cn(
+                "block w-full max-w-sm mx-auto text-[13px] text-slate-600",
+                "file:mr-3 file:inline-flex file:cursor-pointer file:rounded-md file:border-0",
+                "file:bg-brand file:px-4 file:py-2.5 file:text-[13px] file:font-semibold file:text-white",
+                "disabled:opacity-60",
+              ),
+        )}
+      />
 
-          {status && !hint && (
-            <p className="mt-3 text-[12px] text-slate-500 max-w-[320px]">{status}</p>
-          )}
-          {hint && (
-            <p className="mt-3 text-[12px] text-red-600 max-w-[320px]">{hint}</p>
+      {!hasSelection && hint && (
+        <div className="mt-3 flex flex-col items-center">
+          <p className="text-[12px] text-red-600 max-w-[340px] text-center">{hint}</p>
+          {browserInfo.isAndroid && !browserInfo.restricted && (
+            <p className="mt-2 text-[11px] text-slate-500 max-w-[340px] text-center">
+              Tip: open the PDF in your Files app once, then pick it from
+              Downloads here.
+            </p>
           )}
         </div>
       )}

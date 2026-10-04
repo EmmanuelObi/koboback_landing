@@ -1,7 +1,9 @@
-/** Detect browsers where <input type="file"> often returns empty on Android. */
+/** Detect browsers where <input type="file"> is often broken on Android. */
 
 export type UploadBrowserInfo = {
   isAndroid: boolean;
+  /** True Chrome for Android (not WebView / in-app). */
+  isRealChrome: boolean;
   /** In-app WebView / embedded browser that commonly breaks file picks */
   restricted: boolean;
   appName: string | null;
@@ -11,8 +13,8 @@ const IN_APP_RULES: Array<{ re: RegExp; name: string }> = [
   { re: /WABusiness|WAToA|WA4A|WhatsApp/i, name: "WhatsApp" },
   { re: /FBAN|FBAV|FB_IAB|FB4A/i, name: "Facebook" },
   { re: /Instagram/i, name: "Instagram" },
-  { re: /LinkedInApp|LinkedIn/i, name: "LinkedIn" },
-  { re: /Twitter|X\/Android/i, name: "X / Twitter" },
+  { re: /LinkedInApp/i, name: "LinkedIn" },
+  { re: /Twitter/i, name: "X / Twitter" },
   { re: /GSA\//i, name: "Google App" },
   { re: /Line\//i, name: "LINE" },
   { re: /MicroMessenger|WeChat/i, name: "WeChat" },
@@ -23,24 +25,47 @@ const IN_APP_RULES: Array<{ re: RegExp; name: string }> = [
 
 export function getUploadBrowserInfo(): UploadBrowserInfo {
   if (typeof navigator === "undefined") {
-    return { isAndroid: false, restricted: false, appName: null };
+    return {
+      isAndroid: false,
+      isRealChrome: false,
+      restricted: false,
+      appName: null,
+    };
   }
 
   const ua = navigator.userAgent || "";
   const isAndroid = /Android/i.test(ua);
+  const isWebView = /;\s*wv\)/i.test(ua);
 
   for (const rule of IN_APP_RULES) {
     if (rule.re.test(ua)) {
-      return { isAndroid, restricted: true, appName: rule.name };
+      return {
+        isAndroid,
+        isRealChrome: false,
+        restricted: true,
+        appName: rule.name,
+      };
     }
   }
 
-  // Generic Android WebView marker ("; wv)" in Chromium WebViews)
-  if (isAndroid && /;\s*wv\)/i.test(ua)) {
-    return { isAndroid, restricted: true, appName: "in-app browser" };
+  if (isAndroid && isWebView) {
+    return {
+      isAndroid,
+      isRealChrome: false,
+      restricted: true,
+      appName: "in-app browser",
+    };
   }
 
-  return { isAndroid, restricted: false, appName: null };
+  const isRealChrome =
+    isAndroid &&
+    /Chrome\//i.test(ua) &&
+    !/Edg\//i.test(ua) &&
+    !/OPR\//i.test(ua) &&
+    !/SamsungBrowser/i.test(ua) &&
+    !isWebView;
+
+  return { isAndroid, isRealChrome, restricted: false, appName: null };
 }
 
 /** Best-effort open current page in Chrome on Android. */

@@ -223,7 +223,12 @@ export default function StatementsPage() {
           )}
 
           <div className="mt-4">
-            <Button fullWidth onClick={handleUpload} disabled={uploading || !file}>
+            <Button
+              type="button"
+              fullWidth
+              onClick={handleUpload}
+              disabled={uploading || !file}
+            >
               {uploading ? (
                 <>
                   <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />

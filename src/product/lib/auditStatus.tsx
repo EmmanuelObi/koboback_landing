@@ -371,20 +371,12 @@ async function readFileBytes(file: File): Promise<ArrayBuffer> {
   });
 }
 
-export async function prepareStatementFile(
-  file: File,
-): Promise<PreparedStatementUpload | { error: string }> {
-  // Force-read the stream (critical for Android content:// URIs).
-  let bytes: ArrayBuffer;
-  try {
-    bytes = await readFileBytes(file);
-  } catch {
-    return {
-      error:
-        "Could not read that file on this device. Open it from Files → Downloads as a PDF, then try again.",
-    };
-  }
-
+/** Build an upload payload from already-read bytes (preferred on Android). */
+export function prepareStatementBytes(
+  bytes: ArrayBuffer,
+  name: string,
+  mimeType: string = "",
+): PreparedStatementUpload | { error: string } {
   const size = bytes.byteLength;
   if (size === 0) {
     return {
@@ -399,8 +391,8 @@ export async function prepareStatementFile(
   }
 
   const view = new Uint8Array(bytes);
-  let ext = extensionOf(file.name);
-  const mime = (file.type || "").toLowerCase().trim();
+  let ext = extensionOf(name);
+  const mime = (mimeType || "").toLowerCase().trim();
 
   if (!ext || !STATEMENT_EXTENSIONS.has(ext)) {
     if (mime && mime in STATEMENT_MIME_TO_EXT) {
@@ -417,11 +409,25 @@ export async function prepareStatementFile(
     };
   }
 
-  const filename = `${safeBaseName(file.name || "statement")}${ext}`;
+  const filename = `${safeBaseName(name || "statement")}${ext}`;
   const contentType = mimeForExt(ext);
-  // Copy into a fresh Uint8Array + Blob. Never re-wrap with `new File([file])`
-  // — Android Chrome often produces an empty body that way.
   const body = new Blob([view.slice()], { type: contentType });
-
   return { body, filename, contentType, size };
+}
+
+export async function prepareStatementFile(
+  file: File,
+): Promise<PreparedStatementUpload | { error: string }> {
+  // Force-read the stream (critical for Android content:// URIs).
+  let bytes: ArrayBuffer;
+  try {
+    bytes = await readFileBytes(file);
+  } catch {
+    return {
+      error:
+        "Could not read that file on this device. Open it from Files → Downloads as a PDF, then try again.",
+    };
+  }
+
+  return prepareStatementBytes(bytes, file.name, file.type || "");
 }

@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Upload, FileText, X } from "lucide-react";
+import { ExternalLink, Upload, FileText, X } from "lucide-react";
 import { cn } from "../ui/tokens";
 import {
   prepareStatementFile,
   type PreparedStatementUpload,
 } from "../lib/auditStatus";
+import {
+  getUploadBrowserInfo,
+  openInChrome,
+  type UploadBrowserInfo,
+} from "../lib/browserUpload";
 
 interface FileDropzoneProps {
   onFileSelect: (file: File | PreparedStatementUpload | null) => void;
@@ -14,12 +19,22 @@ interface FileDropzoneProps {
   selectedName?: string | null;
 }
 
+function emptyFileMessage(info: UploadBrowserInfo): string {
+  if (info.restricted) {
+    return `This ${info.appName ?? "in-app browser"} cannot attach files on Android. Open KoboBack in Chrome, then choose the file again.`;
+  }
+  if (info.isAndroid) {
+    return "Android did not attach the file (browser shows “No file chosen”). Open this page in Chrome — not WhatsApp/Instagram/Gmail — then pick the file from Files → Downloads.";
+  }
+  return "No file was received. Please choose the statement again.";
+}
+
 /**
  * Statement file picker.
  *
- * Uses a visible native <input type="file"> — custom overlay / label / .click()
- * hacks are unreliable on Android Chrome (picker opens, no change event).
- * Also recovers the File on window focus if change was skipped.
+ * Uses a visible native <input type="file">. On Android, many in-app browsers
+ * open a picker but never populate the input (“No file chosen”) — we detect
+ * that and push users into real Chrome.
  */
 export default function FileDropzone({
   onFileSelect,
@@ -32,6 +47,7 @@ export default function FileDropzone({
   const changeHandledRef = useRef(false);
   const acceptFileRef = useRef<(file: File) => Promise<void>>(async () => {});
   const failRef = useRef<(message: string) => void>(() => {});
+  const browserInfoRef = useRef<UploadBrowserInfo>(getUploadBrowserInfo());
 
   const [dragActive, setDragActive] = useState(false);
   const [localName, setLocalName] = useState<string | null>(null);
@@ -39,6 +55,10 @@ export default function FileDropzone({
   const [hint, setHint] = useState<string | null>(null);
   const [preparing, setPreparing] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [browserInfo, setBrowserInfo] = useState<UploadBrowserInfo>(() =>
+    getUploadBrowserInfo(),
+  );
+  const [showOpenChrome, setShowOpenChrome] = useState(false);
 
   const displayName = selectedName ?? localName;
   const hasSelection = Boolean(displayName);
@@ -47,6 +67,9 @@ export default function FileDropzone({
     (message: string) => {
       setHint(message);
       setStatus(null);
+      setShowOpenChrome(
+        browserInfoRef.current.isAndroid || browserInfoRef.current.restricted,
+      );
       onValidationError?.(message);
     },
     [onValidationError],
@@ -56,6 +79,7 @@ export default function FileDropzone({
     async (file: File) => {
       setPreparing(true);
       setHint(null);
+      setShowOpenChrome(false);
       setStatus(`Reading ${file.name || "file"}…`);
       try {
         const result = await prepareStatementFile(file);
@@ -67,7 +91,9 @@ export default function FileDropzone({
         }
         setLocalName(result.filename);
         setLocalSize(result.size);
-        setStatus(`Ready: ${result.filename} (${(result.size / 1024).toFixed(1)} KB)`);
+        setStatus(
+          `Ready: ${result.filename} (${(result.size / 1024).toFixed(1)} KB)`,
+        );
         onFileSelect(result);
       } finally {
         setPreparing(false);
@@ -80,7 +106,18 @@ export default function FileDropzone({
   acceptFileRef.current = acceptFile;
   failRef.current = fail;
 
-  // Native listeners — more reliable than React synthetic events on some Android builds.
+  useEffect(() => {
+    const info = getUploadBrowserInfo();
+    browserInfoRef.current = info;
+    setBrowserInfo(info);
+    if (info.restricted) {
+      setShowOpenChrome(true);
+      setHint(
+        `Uploads usually fail inside ${info.appName ?? "this in-app browser"} on Android. Open KoboBack in Chrome first.`,
+      );
+    }
+  }, []);
+
   useEffect(() => {
     const input = inputRef.current;
     if (!input) return;
@@ -90,9 +127,7 @@ export default function FileDropzone({
       pickerArmedRef.current = false;
       const file = input.files?.[0] ?? null;
       if (!file) {
-        failRef.current(
-          "No file was received from this device. Open the statement from Files → Downloads, then choose it again.",
-        );
+        failRef.current(emptyFileMessage(browserInfoRef.current));
         return;
       }
       void acceptFileRef.current(file);
@@ -107,16 +142,13 @@ export default function FileDropzone({
 
     input.addEventListener("change", onChange);
     input.addEventListener("click", onPickIntent);
-    input.addEventListener("focus", onPickIntent);
 
     return () => {
       input.removeEventListener("change", onChange);
       input.removeEventListener("click", onPickIntent);
-      input.removeEventListener("focus", onPickIntent);
     };
   }, []);
 
-  // Android sometimes returns from the picker without firing change.
   useEffect(() => {
     const recover = () => {
       if (!pickerArmedRef.current || changeHandledRef.current) return;
@@ -132,11 +164,8 @@ export default function FileDropzone({
           return;
         }
 
-        // Soft hint only — cancelling the picker also hits this path.
-        setHint(
-          "No file received. If you selected one, open it from Files → Downloads and try again.",
-        );
-        setStatus(null);
+        // Native control still says "No file chosen" — browser never got the file.
+        failRef.current(emptyFileMessage(browserInfoRef.current));
       }, 500);
     };
 
@@ -210,6 +239,29 @@ export default function FileDropzone({
       onDragOver={handleDrag}
       onDrop={handleDrop}
     >
+      {showOpenChrome && !hasSelection && (
+        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-left">
+          <p className="text-[13px] font-medium text-amber-950">
+            {browserInfo.restricted
+              ? `Open in Chrome to upload`
+              : `If you see “No file chosen”, open Chrome`}
+          </p>
+          <p className="mt-1 text-[12px] text-amber-900/80">
+            {browserInfo.restricted
+              ? `${browserInfo.appName ?? "This app"}’s built-in browser on Android often cannot attach PDFs. Use Chrome (or your default browser).`
+              : `Android in-app browsers (WhatsApp, Instagram, Gmail, etc.) open the file picker but leave “No file chosen”.`}
+          </p>
+          <button
+            type="button"
+            onClick={() => openInChrome()}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-amber-950 px-3 py-2 text-[12px] font-semibold text-white"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            Open in Chrome
+          </button>
+        </div>
+      )}
+
       {hasSelection ? (
         <div className="flex items-center justify-center gap-3">
           <FileText className="w-8 h-8 text-green-600 shrink-0" />
@@ -247,10 +299,6 @@ export default function FileDropzone({
             PDF, CSV, or Excel · max 10 MB
           </p>
 
-          {/*
-            Visible native control — no opacity overlay, no label hack, no .click().
-            This is the reliable path on Android Chrome.
-          */}
           <input
             id="koboback-statement-file"
             ref={inputRef}

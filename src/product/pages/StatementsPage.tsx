@@ -205,7 +205,7 @@ export default function StatementsPage() {
               toast(message, "error");
             }}
             disabled={uploading}
-            selectedName={file?.name ?? null}
+            selectedName={file ? file.name || "Selected file" : null}
           />
 
           {error && (

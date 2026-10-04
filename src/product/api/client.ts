@@ -228,13 +228,49 @@ export interface AuditReport {
   account_name: string | null;
 }
 
+function uploadFilenameFor(file: File): { filename: string; contentType: string } {
+  const name = (file.name || "").trim();
+  const mime = (file.type || "").toLowerCase();
+  const extMatch = name.match(/\.(pdf|csv|xls|xlsx)$/i);
+  if (extMatch) {
+    return {
+      filename: name,
+      contentType: mime || "application/octet-stream",
+    };
+  }
+
+  // Android often omits extension + MIME; API requires a known extension.
+  let ext = ".pdf";
+  let contentType = "application/pdf";
+  if (mime.includes("csv")) {
+    ext = ".csv";
+    contentType = "text/csv";
+  } else if (mime.includes("spreadsheetml") || mime.includes("xlsx")) {
+    ext = ".xlsx";
+    contentType =
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  } else if (mime.includes("ms-excel") || mime.includes("xls")) {
+    ext = ".xls";
+    contentType = "application/vnd.ms-excel";
+  } else if (mime === "application/pdf" || mime === "application/x-pdf") {
+    ext = ".pdf";
+    contentType = "application/pdf";
+  }
+
+  const base =
+    name && !name.includes("/") && name.toLowerCase() !== "blob"
+      ? name.replace(/\.[^.]+$/, "")
+      : "statement";
+  return { filename: `${base.slice(0, 180)}${ext}`, contentType };
+}
+
 export async function uploadStatement(file: File): Promise<UploadJobResponse> {
   if (file.size === 0) {
     throw new Error("Uploaded file is empty");
   }
 
-  const filename = file.name;
-  const contentType = file.type || "application/octet-stream";
+  // Do not re-wrap with `new File([...])` — keep the original blob as the PUT body.
+  const { filename, contentType } = uploadFilenameFor(file);
 
   const { data: init } = await api.post<UploadInitResponse>("/upload/init", {
     filename,

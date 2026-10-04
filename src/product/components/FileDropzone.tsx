@@ -21,7 +21,9 @@ export default function FileDropzone({
   const [localName, setLocalName] = useState<string | null>(null);
   const [localSize, setLocalSize] = useState<number | null>(null);
 
-  const displayName = selectedName ?? localName;
+  // Use || not ?? — Android often gives file.name === "", which must not
+  // wipe a good localName / look like “no selection”.
+  const displayName = selectedName || localName;
   const hasSelection = Boolean(displayName);
 
   const acceptFile = useCallback(

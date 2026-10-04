@@ -233,6 +233,16 @@ export function nextActionForJob(job: JobSummary): {
   return null;
 }
 
+const STATEMENT_EXTENSIONS = new Set([".pdf", ".csv", ".xls", ".xlsx"]);
+
+const STATEMENT_MIMES = new Set([
+  "application/pdf",
+  "text/csv",
+  "application/csv",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+]);
+
 export function validateStatementFile(file: File): string | null {
   if (file.size === 0) {
     return "That file looks empty. Please choose another statement export.";
@@ -240,194 +250,11 @@ export function validateStatementFile(file: File): string | null {
   if (file.size > MAX_UPLOAD_BYTES) {
     return "File is too large. Please upload a statement under 10 MB.";
   }
-  if (!statementFileLooksValid(file.name, file.type || "")) {
+  const dot = file.name.lastIndexOf(".");
+  const ext = dot >= 0 ? file.name.slice(dot).toLowerCase() : "";
+  const mime = (file.type || "").toLowerCase();
+  if (!STATEMENT_EXTENSIONS.has(ext) && !STATEMENT_MIMES.has(mime)) {
     return "Please upload a PDF, CSV, or Excel bank statement.";
   }
   return null;
-}
-
-const STATEMENT_MIME_TO_EXT: Record<string, string> = {
-  "application/pdf": ".pdf",
-  "application/x-pdf": ".pdf",
-  "text/pdf": ".pdf",
-  "text/csv": ".csv",
-  "application/csv": ".csv",
-  "text/comma-separated-values": ".csv",
-  "application/vnd.ms-excel": ".xls",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
-  "application/haansoftxlsx": ".xlsx",
-  "application/wps-office.xlsx": ".xlsx",
-};
-
-const STATEMENT_EXTENSIONS = new Set([".pdf", ".csv", ".xls", ".xlsx"]);
-
-function extensionOf(name: string): string {
-  const i = name.lastIndexOf(".");
-  if (i < 0 || i === name.length - 1) return "";
-  return name.slice(i).toLowerCase();
-}
-
-function statementFileLooksValid(name: string, mime: string): boolean {
-  const ext = extensionOf(name);
-  if (ext && STATEMENT_EXTENSIONS.has(ext)) return true;
-  const normalizedMime = (mime || "").toLowerCase().trim();
-  if (normalizedMime && normalizedMime in STATEMENT_MIME_TO_EXT) return true;
-  return false;
-}
-
-/** Sniff common statement formats from the first bytes (Android often omits type/ext). */
-function sniffExtensionFromBytes(bytes: Uint8Array): string | null {
-  const head = bytes.subarray(0, Math.min(bytes.length, 16));
-  const asText = String.fromCharCode(...head);
-
-  if (asText.startsWith("%PDF")) return ".pdf";
-  if (head[0] === 0x50 && head[1] === 0x4b && head[2] === 0x03 && head[3] === 0x04) {
-    return ".xlsx";
-  }
-  if (
-    head[0] === 0xd0 &&
-    head[1] === 0xcf &&
-    head[2] === 0x11 &&
-    head[3] === 0xe0
-  ) {
-    return ".xls";
-  }
-  const sample = asText.replace(/\0/g, "");
-  if (
-    sample.length >= 8 &&
-    /[,\t;]/.test(sample) &&
-    /^[\x09\x0a\x0d\x20-\x7e]+$/.test(sample)
-  ) {
-    return ".csv";
-  }
-  return null;
-}
-
-function mimeForExt(ext: string): string {
-  switch (ext) {
-    case ".pdf":
-      return "application/pdf";
-    case ".csv":
-      return "text/csv";
-    case ".xls":
-      return "application/vnd.ms-excel";
-    case ".xlsx":
-      return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-    default:
-      return "application/octet-stream";
-  }
-}
-
-function safeBaseName(name: string): string {
-  const raw = name.replace(/\.[^.]+$/, "").trim();
-  if (!raw || raw.toLowerCase() === "blob" || raw.includes("/") || raw.includes("\\")) {
-    return "statement";
-  }
-  return raw.slice(0, 180);
-}
-
-/** @deprecated kept for callers that only need a sync name check */
-export function normalizeStatementFile(file: File): File {
-  return file;
-}
-
-export type PreparedStatementUpload = {
-  /** Original picker file / materialized blob body for S3 PUT */
-  body: Blob;
-  filename: string;
-  contentType: string;
-  size: number;
-};
-
-/**
- * Android Chrome often:
- * - returns PDFs with empty MIME + no extension
- * - breaks `new File([file], renamed)` into empty bodies
- * - needs the content:// stream fully read before upload
- */
-async function readFileBytes(file: File): Promise<ArrayBuffer> {
-  // Prefer arrayBuffer(); fall back to FileReader when Android returns 0 bytes
-  // or throws on content:// URIs.
-  try {
-    const direct = await file.arrayBuffer();
-    if (direct.byteLength > 0) return direct;
-  } catch {
-    // continue to FileReader
-  }
-
-  return new Promise<ArrayBuffer>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (reader.result instanceof ArrayBuffer) {
-        resolve(reader.result);
-        return;
-      }
-      reject(new Error("FileReader returned no data"));
-    };
-    reader.onerror = () => {
-      reject(reader.error ?? new Error("FileReader failed"));
-    };
-    reader.readAsArrayBuffer(file);
-  });
-}
-
-/** Build an upload payload from already-read bytes (preferred on Android). */
-export function prepareStatementBytes(
-  bytes: ArrayBuffer,
-  name: string,
-  mimeType: string = "",
-): PreparedStatementUpload | { error: string } {
-  const size = bytes.byteLength;
-  if (size === 0) {
-    return {
-      error:
-        "That file looks empty on this device. Save the statement as a PDF to Downloads, then choose it again.",
-    };
-  }
-  if (size > MAX_UPLOAD_BYTES) {
-    return {
-      error: "File is too large. Please upload a statement under 10 MB.",
-    };
-  }
-
-  const view = new Uint8Array(bytes);
-  let ext = extensionOf(name);
-  const mime = (mimeType || "").toLowerCase().trim();
-
-  if (!ext || !STATEMENT_EXTENSIONS.has(ext)) {
-    if (mime && mime in STATEMENT_MIME_TO_EXT) {
-      ext = STATEMENT_MIME_TO_EXT[mime];
-    } else {
-      ext = sniffExtensionFromBytes(view) || "";
-    }
-  }
-
-  if (!ext || !STATEMENT_EXTENSIONS.has(ext)) {
-    return {
-      error:
-        "Could not recognize that file on this device. Save/export the statement as a PDF, then choose it from Downloads.",
-    };
-  }
-
-  const filename = `${safeBaseName(name || "statement")}${ext}`;
-  const contentType = mimeForExt(ext);
-  const body = new Blob([view.slice()], { type: contentType });
-  return { body, filename, contentType, size };
-}
-
-export async function prepareStatementFile(
-  file: File,
-): Promise<PreparedStatementUpload | { error: string }> {
-  // Force-read the stream (critical for Android content:// URIs).
-  let bytes: ArrayBuffer;
-  try {
-    bytes = await readFileBytes(file);
-  } catch {
-    return {
-      error:
-        "Could not read that file on this device. Open it from Files → Downloads as a PDF, then try again.",
-    };
-  }
-
-  return prepareStatementBytes(bytes, file.name, file.type || "");
 }

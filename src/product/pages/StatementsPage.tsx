@@ -31,7 +31,6 @@ import {
   statusLabel,
   statusTone,
   userFacingJobMessage,
-  type PreparedStatementUpload,
 } from "../lib/auditStatus";
 
 function parseApiError(err: unknown): string {
@@ -61,7 +60,7 @@ export default function StatementsPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [jobs, setJobs] = useState<JobSummary[]>([]);
-  const [file, setFile] = useState<PreparedStatementUpload | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -110,7 +109,7 @@ export default function StatementsPage() {
   }, [hasProcessing, loadJobs]);
 
   const startUpload = useCallback(
-    async (selected: PreparedStatementUpload) => {
+    async (selected: File) => {
       setUploading(true);
       setError(null);
 
@@ -128,20 +127,14 @@ export default function StatementsPage() {
     [navigate, toast],
   );
 
-  const handleFileSelect = (f: File | PreparedStatementUpload | null) => {
+  const handleFileSelect = (f: File | null) => {
     if (!f) {
       setFile(null);
       return;
     }
-    // Dropzone prepares the payload; keep selection visible so Android users
-    // can confirm the file stuck before upload starts.
-    if ("body" in f && "filename" in f) {
-      setFile(f);
-      setError(null);
-      toast(`Selected ${f.filename}. Tap Upload to continue.`, "success");
-      return;
-    }
-    setError("Could not read that file. Please try again.");
+    setFile(f);
+    setError(null);
+    void startUpload(f);
   };
 
   const handleUpload = useCallback(() => {
@@ -200,8 +193,8 @@ export default function StatementsPage() {
               Upload a statement
             </h2>
             <p className="text-[13px] text-slate-500 mt-1">
-              PDF, CSV, or Excel · max 10 MB. Choose a file, then tap Upload.
-              Extraction and a free fee scan follow.
+              PDF, CSV, or Excel · max 10 MB. Upload starts when you choose a
+              file; extraction and a free fee scan follow.
             </p>
           </div>
 
@@ -212,7 +205,7 @@ export default function StatementsPage() {
               toast(message, "error");
             }}
             disabled={uploading}
-            selectedName={file?.filename ?? null}
+            selectedName={file?.name ?? null}
           />
 
           {error && (
@@ -222,26 +215,28 @@ export default function StatementsPage() {
             </div>
           )}
 
-          <div className="mt-4">
-            <Button
-              type="button"
-              fullWidth
-              onClick={handleUpload}
-              disabled={uploading || !file}
-            >
-              {uploading ? (
-                <>
-                  <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  Uploading…
-                </>
-              ) : (
-                <>
-                  <UploadIcon className="w-4 h-4" />
-                  {file ? "Upload statement" : "Choose a file first"}
-                </>
-              )}
-            </Button>
-          </div>
+          {(file || uploading) && (
+            <div className="mt-4">
+              <Button
+                type="button"
+                fullWidth
+                onClick={handleUpload}
+                disabled={uploading || !file}
+              >
+                {uploading ? (
+                  <>
+                    <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    Uploading…
+                  </>
+                ) : (
+                  <>
+                    <UploadIcon className="w-4 h-4" />
+                    Retry upload
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </section>
 
         <div className="flex items-center justify-between mb-3">

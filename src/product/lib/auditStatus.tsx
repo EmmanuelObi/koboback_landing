@@ -233,16 +233,6 @@ export function nextActionForJob(job: JobSummary): {
   return null;
 }
 
-const STATEMENT_EXTENSIONS = new Set([".pdf", ".csv", ".xls", ".xlsx"]);
-
-const STATEMENT_MIMES = new Set([
-  "application/pdf",
-  "text/csv",
-  "application/csv",
-  "application/vnd.ms-excel",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-]);
-
 export function validateStatementFile(file: File): string | null {
   if (file.size === 0) {
     return "That file looks empty. Please choose another statement export.";
@@ -250,11 +240,6 @@ export function validateStatementFile(file: File): string | null {
   if (file.size > MAX_UPLOAD_BYTES) {
     return "File is too large. Please upload a statement under 10 MB.";
   }
-  const dot = file.name.lastIndexOf(".");
-  const ext = dot >= 0 ? file.name.slice(dot).toLowerCase() : "";
-  const mime = (file.type || "").toLowerCase();
-  if (!STATEMENT_EXTENSIONS.has(ext) && !STATEMENT_MIMES.has(mime)) {
-    return "Please upload a PDF, CSV, or Excel bank statement.";
-  }
+  // Type/extension checks are enforced by the API — Android often omits both.
   return null;
 }

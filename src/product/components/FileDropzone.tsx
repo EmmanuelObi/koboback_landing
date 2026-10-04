@@ -33,7 +33,7 @@ export default function FileDropzone({
         onValidationError?.(error);
         return;
       }
-      setLocalName(file.name);
+      setLocalName(file.name || "statement");
       setLocalSize(file.size);
       onFileSelect(file);
     },
@@ -62,9 +62,7 @@ export default function FileDropzone({
       if (disabled) return;
       const file = e.dataTransfer.files?.[0];
       if (!file) {
-        onValidationError?.(
-          "No file was dropped. Please choose a PDF, CSV, or Excel statement.",
-        );
+        onValidationError?.("No file was dropped.");
         return;
       }
       acceptFile(file);
@@ -74,8 +72,10 @@ export default function FileDropzone({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
-    e.target.value = "";
-    if (!file) return;
+    if (!file) {
+      onValidationError?.("No file was selected.");
+      return;
+    }
     acceptFile(file);
   };
 
@@ -91,7 +91,7 @@ export default function FileDropzone({
   return (
     <div
       className={cn(
-        "relative border border-dashed rounded-xl p-8 sm:p-10 text-center transition-colors",
+        "border border-dashed rounded-xl p-8 sm:p-10 text-center transition-colors",
         dragActive
           ? "border-brand bg-white"
           : hasSelection
@@ -111,12 +111,10 @@ export default function FileDropzone({
             <p className="text-[14px] font-medium text-slate-950 truncate">
               {displayName}
             </p>
-            {localSize != null ? (
+            {localSize != null && (
               <p className="text-[13px] text-slate-500">
                 {(localSize / 1024).toFixed(1)} KB
               </p>
-            ) : (
-              <p className="text-[13px] text-slate-500">Ready to upload</p>
             )}
           </div>
           <button
@@ -130,33 +128,25 @@ export default function FileDropzone({
           </button>
         </div>
       ) : (
-        <label
-          className={cn(
-            "flex flex-col items-center cursor-pointer",
-            disabled && "pointer-events-none",
-          )}
-        >
+        <div className="flex flex-col items-center w-full">
           <div className="mx-auto mb-4 h-11 w-11 rounded-md bg-slate-100 flex items-center justify-center">
             <Upload className="w-5 h-5 text-slate-500" />
           </div>
           <p className="text-[14px] text-slate-700 font-medium">
-            Drop your statement here
+            Choose your statement
           </p>
           <p className="text-[13px] text-slate-400 mt-1.5 mb-4">
             PDF, CSV, or Excel · max 10 MB
           </p>
-          <span className="inline-flex items-center justify-center rounded-md bg-brand px-4 py-2.5 text-[13px] font-semibold text-white">
-            Choose file
-          </span>
+          {/* Visible native input — hidden/sr-only inputs break on Android Chrome. */}
           <input
             ref={inputRef}
             type="file"
-            accept=".pdf,.csv,.xls,.xlsx,application/pdf,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             onChange={handleChange}
             disabled={disabled}
-            className="sr-only"
+            className="block w-full max-w-sm text-[13px] text-slate-600"
           />
-        </label>
+        </div>
       )}
     </div>
   );

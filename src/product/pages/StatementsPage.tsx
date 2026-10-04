@@ -31,7 +31,7 @@ import {
   statusLabel,
   statusTone,
   userFacingJobMessage,
-  prepareStatementFile,
+  type PreparedStatementUpload,
 } from "../lib/auditStatus";
 
 function parseApiError(err: unknown): string {
@@ -61,7 +61,7 @@ export default function StatementsPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [jobs, setJobs] = useState<JobSummary[]>([]);
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState<PreparedStatementUpload | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -110,36 +110,38 @@ export default function StatementsPage() {
   }, [hasProcessing, loadJobs]);
 
   const startUpload = useCallback(
-    async (selected: File) => {
-      const prepared = await prepareStatementFile(selected);
-      if ("error" in prepared) {
-        setError(prepared.error);
-        toast(prepared.error, "error");
-        return;
-      }
-
+    async (selected: PreparedStatementUpload) => {
       setUploading(true);
       setError(null);
 
       try {
-        const uploaded = await uploadStatement(prepared.file);
+        const uploaded = await uploadStatement(selected);
         setFile(null);
         toast("Statement uploaded — extracting transactions…", "success");
         navigate(`/product/audit/${uploaded.job_id}`);
       } catch (err: unknown) {
         setError(parseApiError(err));
+        toast(parseApiError(err), "error");
         setUploading(false);
       }
     },
     [navigate, toast],
   );
 
-  const handleFileSelect = (f: File | null) => {
-    setFile(f);
-    if (!f) return;
-    setError(null);
-    toast(`Selected ${f.name} — uploading…`, "info");
-    void startUpload(f);
+  const handleFileSelect = (f: File | PreparedStatementUpload | null) => {
+    if (!f) {
+      setFile(null);
+      return;
+    }
+    // Dropzone already prepares Android-safe payloads.
+    if ("body" in f && "filename" in f) {
+      setFile(f);
+      setError(null);
+      toast(`Selected ${f.filename} — uploading…`, "info");
+      void startUpload(f);
+      return;
+    }
+    setError("Could not read that file. Please try again.");
   };
 
   const handleUpload = useCallback(() => {
@@ -210,7 +212,7 @@ export default function StatementsPage() {
               toast(message, "error");
             }}
             disabled={uploading}
-            selectedName={file?.name ?? null}
+            selectedName={file?.filename ?? null}
           />
 
           {error && (

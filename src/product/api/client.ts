@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getSupabaseClient, isSupabaseConfigured } from "../lib/supabase";
+import type { PreparedStatementUpload } from "../lib/auditStatus";
 
 const apiBaseURL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
@@ -228,32 +229,67 @@ export interface AuditReport {
   account_name: string | null;
 }
 
-export async function uploadStatement(file: File): Promise<UploadJobResponse> {
-  if (file.size === 0) {
+export async function uploadStatement(
+  file: File | PreparedStatementUpload,
+): Promise<UploadJobResponse> {
+  let body: Blob;
+  let filename: string;
+  let contentType: string;
+  let fileSize: number;
+
+  if (
+    typeof file === "object" &&
+    file !== null &&
+    "body" in file &&
+    "filename" in file &&
+    "contentType" in file
+  ) {
+    body = file.body;
+    filename = file.filename;
+    contentType = file.contentType;
+    fileSize = file.size;
+  } else {
+    const f = file as File;
+    if (f.size === 0) {
+      throw new Error("Uploaded file is empty");
+    }
+    body = f;
+    filename = f.name;
+    contentType = f.type || "application/octet-stream";
+    fileSize = f.size;
+  }
+
+  if (fileSize === 0) {
     throw new Error("Uploaded file is empty");
   }
 
   // Step 1: Get presigned S3 PUT URL from our API
   const { data: init } = await api.post<UploadInitResponse>("/upload/init", {
-    filename: file.name,
-    content_type: file.type || "application/octet-stream",
-    file_size: file.size,
+    filename,
+    content_type: contentType,
+    file_size: fileSize,
   });
 
   // Step 2: Upload directly to S3 (browser → S3, not through our backend)
-  await fetch(init.upload_url, {
-    method: "PUT",
-    headers: {
-      "Content-Type": init.content_type,
-    },
-    body: file,
-  }).then((res) => {
-    if (!res.ok) {
-      throw new Error(
-        `Direct upload to storage failed (${res.status}). Check S3 bucket CORS settings.`,
-      );
-    }
-  });
+  let putRes: Response;
+  try {
+    putRes = await fetch(init.upload_url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": init.content_type,
+      },
+      body,
+    });
+  } catch {
+    throw new Error(
+      "Could not reach storage from this device. Check your connection and try again.",
+    );
+  }
+  if (!putRes.ok) {
+    throw new Error(
+      `Direct upload to storage failed (${putRes.status}). Try again, or save the statement as a PDF first.`,
+    );
+  }
 
   // Step 3: Tell backend to verify S3 object and start processing
   const { data } = await api.post<UploadJobResponse>(

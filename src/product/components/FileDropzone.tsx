@@ -1,10 +1,13 @@
 import { useCallback, useRef, useState } from "react";
 import { Upload, FileText, X } from "lucide-react";
 import { cn } from "../ui/tokens";
-import { prepareStatementFile } from "../lib/auditStatus";
+import {
+  prepareStatementFile,
+  type PreparedStatementUpload,
+} from "../lib/auditStatus";
 
 interface FileDropzoneProps {
-  onFileSelect: (file: File | null) => void;
+  onFileSelect: (file: File | PreparedStatementUpload | null) => void;
   onValidationError?: (message: string) => void;
   disabled?: boolean;
   /** Parent-controlled selected filename (drives selected UI) */
@@ -12,11 +15,12 @@ interface FileDropzoneProps {
 }
 
 /**
- * Mobile-safe statement picker.
+ * Mobile-safe statement picker tuned for Android Chrome.
  *
- * Android Chrome often breaks `display:none` file inputs (picker opens but
- * onChange never fires). Keep the input visually hidden but layout-present,
- * and sniff file bytes when Android omits MIME type / extension.
+ * Prefer a real button + input.click() over a full-zone opacity overlay alone —
+ * some Android Chrome builds open the picker from overlays then never fire onChange.
+ * No `accept` filter: Android often omits MIME/extension and a strict accept hides
+ * valid statement files in Downloads.
  */
 export default function FileDropzone({
   onFileSelect,
@@ -54,15 +58,24 @@ export default function FileDropzone({
           return;
         }
         setHint(null);
-        setLocalName(result.file.name);
-        setLocalSize(result.file.size);
-        onFileSelect(result.file);
+        setLocalName(result.filename);
+        setLocalSize(result.size);
+        onFileSelect(result);
       } finally {
         setPreparing(false);
       }
     },
     [fail, onFileSelect],
   );
+
+  const openPicker = useCallback(() => {
+    if (disabled || preparing) return;
+    const input = inputRef.current;
+    if (!input) return;
+    // Reset before open so selecting the same path fires onChange again.
+    input.value = "";
+    input.click();
+  }, [disabled, preparing]);
 
   const handleDrag = useCallback(
     (e: React.DragEvent) => {
@@ -99,12 +112,8 @@ export default function FileDropzone({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const list = e.target.files;
       const file = list && list.length > 0 ? list[0] : null;
-      // Reset so the same path can be chosen again later.
       e.target.value = "";
-      if (!file) {
-        // User cancelled, or the picker returned nothing.
-        return;
-      }
+      if (!file) return;
       void acceptFile(file);
     },
     [acceptFile],
@@ -123,7 +132,7 @@ export default function FileDropzone({
   return (
     <div
       className={cn(
-        "border border-dashed rounded-xl p-8 sm:p-10 text-center transition-colors",
+        "relative border border-dashed rounded-xl p-8 sm:p-10 text-center transition-colors",
         dragActive
           ? "border-brand bg-white"
           : hasSelection
@@ -136,6 +145,20 @@ export default function FileDropzone({
       onDragOver={handleDrag}
       onDrop={handleDrop}
     >
+      {/*
+        Keep the input in the DOM (not display:none). Opening via button.click()
+        is the reliable path on Android Chrome.
+      */}
+      <input
+        ref={inputRef}
+        type="file"
+        onChange={handleChange}
+        disabled={disabled || preparing}
+        className="absolute h-px w-px opacity-0"
+        aria-hidden="true"
+        tabIndex={-1}
+      />
+
       {hasSelection ? (
         <div className="flex items-center justify-center gap-3">
           <FileText className="w-8 h-8 text-green-600 shrink-0" />
@@ -167,35 +190,19 @@ export default function FileDropzone({
             <Upload className="w-5 h-5 text-slate-500" />
           </div>
           <p className="text-[14px] text-slate-700 font-medium">
-            Drop your statement here
+            {preparing ? "Reading file…" : "Tap to choose your statement"}
           </p>
-          <p className="text-[13px] text-slate-400 mt-1.5 mb-4">
+          <p className="text-[13px] text-slate-400 mt-1.5">
             PDF, CSV, or Excel · max 10 MB
           </p>
-
-          <label
-            className={cn(
-              "relative inline-flex items-center justify-center gap-2 rounded-md bg-brand px-4 py-2.5 text-[13px] font-semibold text-white overflow-hidden",
-              disabled || preparing
-                ? "pointer-events-none opacity-60"
-                : "cursor-pointer hover:opacity-95",
-            )}
+          <button
+            type="button"
+            onClick={openPicker}
+            disabled={disabled || preparing}
+            className="mt-4 inline-flex items-center justify-center rounded-md bg-brand px-4 py-2.5 text-[13px] font-semibold text-white disabled:opacity-60"
           >
-            {preparing ? "Reading file…" : "Choose file"}
-            {/*
-              Do NOT use display:none / .hidden — Android Chrome often opens the
-              picker then never fires onChange. Keep the input opacity-0 but
-              covering the label hit area.
-            */}
-            <input
-              ref={inputRef}
-              type="file"
-              onChange={handleChange}
-              disabled={disabled || preparing}
-              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-            />
-          </label>
-
+            {preparing ? "Reading…" : "Choose file"}
+          </button>
           {hint && (
             <p className="mt-3 text-[12px] text-red-600 max-w-[320px]">{hint}</p>
           )}

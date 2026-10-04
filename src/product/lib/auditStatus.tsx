@@ -345,13 +345,39 @@ export type PreparedStatementUpload = {
  * - breaks `new File([file], renamed)` into empty bodies
  * - needs the content:// stream fully read before upload
  */
+async function readFileBytes(file: File): Promise<ArrayBuffer> {
+  // Prefer arrayBuffer(); fall back to FileReader when Android returns 0 bytes
+  // or throws on content:// URIs.
+  try {
+    const direct = await file.arrayBuffer();
+    if (direct.byteLength > 0) return direct;
+  } catch {
+    // continue to FileReader
+  }
+
+  return new Promise<ArrayBuffer>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (reader.result instanceof ArrayBuffer) {
+        resolve(reader.result);
+        return;
+      }
+      reject(new Error("FileReader returned no data"));
+    };
+    reader.onerror = () => {
+      reject(reader.error ?? new Error("FileReader failed"));
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
 export async function prepareStatementFile(
   file: File,
 ): Promise<PreparedStatementUpload | { error: string }> {
   // Force-read the stream (critical for Android content:// URIs).
   let bytes: ArrayBuffer;
   try {
-    bytes = await file.arrayBuffer();
+    bytes = await readFileBytes(file);
   } catch {
     return {
       error:

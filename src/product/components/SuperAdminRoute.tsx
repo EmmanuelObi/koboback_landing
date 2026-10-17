@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AuthLoadingScreen from "../ui/AuthLoadingScreen";
@@ -9,8 +10,22 @@ export default function SuperAdminRoute({
   children: React.ReactNode;
 }) {
   const { isSuperAdmin, loading, rolesLoading, isConfigured, user } = useAuth();
+  const authorizedUserIdRef = useRef<string | null>(null);
 
-  if (loading || rolesLoading) {
+  useEffect(() => {
+    if (!rolesLoading && isSuperAdmin && user) {
+      authorizedUserIdRef.current = user.id;
+    }
+  }, [isSuperAdmin, rolesLoading, user]);
+
+  const isRefreshingAuthorizedUser =
+    rolesLoading &&
+    isSuperAdmin &&
+    user?.id === authorizedUserIdRef.current;
+
+  // Keep an already-authorized console mounted during background role checks.
+  // Unmounting here would discard any in-progress page state on token refresh.
+  if (loading || (rolesLoading && !isRefreshingAuthorizedUser)) {
     return <AuthLoadingScreen message="Checking access…" />;
   }
 

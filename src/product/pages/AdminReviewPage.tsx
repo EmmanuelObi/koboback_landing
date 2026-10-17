@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -102,6 +102,8 @@ function Field({
 const inputClass =
   "w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/30 disabled:bg-slate-50";
 
+const AUTOSAVE_DELAY_MS = 1200;
+
 export default function AdminReviewPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
@@ -116,6 +118,12 @@ export default function AdminReviewPage() {
   >(null);
   const [showStatement, setShowStatement] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [autosaveStatus, setAutosaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const [autosaveError, setAutosaveError] = useState<string | null>(null);
+  const editRevisionRef = useRef(0);
+  const autosaveQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
     if (!jobId) return;
@@ -128,6 +136,8 @@ export default function AdminReviewPage() {
         }
         setError(null);
         setDirty(false);
+        setAutosaveStatus("idle");
+        setAutosaveError(null);
       })
       .catch((err) => setError(parseApiError(err)))
       .finally(() => setLoading(false));
@@ -135,6 +145,7 @@ export default function AdminReviewPage() {
 
   const canDecide = job?.status === "pending_review";
   const statement: ParsedStatement | null = job?.parsed_statement ?? null;
+  const isPersisting = Boolean(saving) || autosaveStatus === "saving";
 
   const overchargeFromFlags = useMemo(() => {
     if (!draft) return 0;
@@ -145,18 +156,82 @@ export default function AdminReviewPage() {
   }, [draft]);
 
   const updateDraft = (updater: (prev: AuditReport) => AuditReport) => {
+    editRevisionRef.current += 1;
     setDraft((prev) => (prev ? updater(prev) : prev));
     setDirty(true);
+    setAutosaveStatus((status) =>
+      status === "saving" ? "saving" : "idle",
+    );
+    setAutosaveError(null);
   };
+
+  useEffect(() => {
+    if (!dirty || !canDecide || !jobId || !draft || saving) return;
+
+    const revision = editRevisionRef.current;
+    const reportSnapshot = cloneReport(draft);
+    const notesSnapshot = notes;
+    const timeoutId = window.setTimeout(() => {
+      setAutosaveStatus("saving");
+      setAutosaveError(null);
+
+      const request = autosaveQueueRef.current.then(async () => {
+        const updated = await saveAdminReport(
+          jobId,
+          reportSnapshot,
+          notesSnapshot,
+        );
+
+        // A newer edit may have happened while this request was in flight. Its
+        // own debounced save is queued next, so only mark the matching revision
+        // as clean.
+        if (editRevisionRef.current === revision) {
+          setJob(updated);
+          setDirty(false);
+          setAutosaveStatus("saved");
+        }
+      });
+
+      autosaveQueueRef.current = request.catch(() => undefined);
+      void request.catch((err) => {
+        if (editRevisionRef.current === revision) {
+          setAutosaveStatus("error");
+          setAutosaveError(parseApiError(err));
+        }
+      });
+    }, AUTOSAVE_DELAY_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [canDecide, dirty, draft, jobId, notes, saving]);
+
+  useEffect(() => {
+    if (!dirty) return;
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [dirty]);
 
   const handleSave = async () => {
     if (!jobId || !draft) return;
+    const revision = editRevisionRef.current;
+    const reportSnapshot = cloneReport(draft);
+    const notesSnapshot = notes;
     setSaving("save");
     try {
-      const updated = await saveAdminReport(jobId, draft, notes);
+      const updated = await saveAdminReport(
+        jobId,
+        reportSnapshot,
+        notesSnapshot,
+      );
       setJob(updated);
-      if (updated.audit_report) setDraft(cloneReport(updated.audit_report));
-      setDirty(false);
+      if (editRevisionRef.current === revision) {
+        setDirty(false);
+        setAutosaveStatus("saved");
+        setAutosaveError(null);
+      }
       toast("Draft saved.", "success");
     } catch (err) {
       setError(parseApiError(err));
@@ -167,6 +242,7 @@ export default function AdminReviewPage() {
 
   const handleApprove = async () => {
     if (!jobId || !draft) return;
+    editRevisionRef.current += 1;
     setSaving("approve");
     try {
       const updated = await approveAdminJob(jobId, notes, draft);
@@ -183,6 +259,7 @@ export default function AdminReviewPage() {
 
   const handleHold = async () => {
     if (!jobId || !draft) return;
+    editRevisionRef.current += 1;
     setSaving("hold");
     try {
       const updated = await holdAdminJob(jobId, notes, draft);
@@ -206,6 +283,7 @@ export default function AdminReviewPage() {
     ) {
       return;
     }
+    editRevisionRef.current += 1;
     setSaving("reset");
     try {
       const updated = await resetAdminReport(jobId);
@@ -324,9 +402,17 @@ export default function AdminReviewPage() {
         {job.status === "pending_review" && (
           <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4 flex items-start gap-3">
             <Clock className="w-4 h-4 text-amber-700 mt-0.5" />
-            <p className="text-[13px] text-slate-700">
+            <p className="text-[13px] text-slate-700" aria-live="polite">
               Hidden from the customer until you release it.
-              {dirty ? " You have unsaved edits." : ""}
+              {autosaveStatus === "saving"
+                ? " Saving changes…"
+                : autosaveStatus === "error" && dirty
+                  ? ` Autosave failed: ${autosaveError ?? "Please save the draft manually."}`
+                  : dirty
+                    ? " Unsaved edits will be saved automatically…"
+                    : autosaveStatus === "saved"
+                      ? " All changes saved."
+                      : ""}
             </p>
           </div>
         )}
@@ -1083,8 +1169,13 @@ export default function AdminReviewPage() {
           <textarea
             value={notes}
             onChange={(event) => {
+              editRevisionRef.current += 1;
               setNotes(event.target.value);
               setDirty(true);
+              setAutosaveStatus((status) =>
+                status === "saving" ? "saving" : "idle",
+              );
+              setAutosaveError(null);
             }}
             disabled={!canDecide}
             rows={4}
@@ -1093,7 +1184,10 @@ export default function AdminReviewPage() {
           />
           {canDecide && draft && (
             <div className="mt-4 flex flex-wrap gap-3">
-              <Button onClick={() => void handleApprove()} disabled={!!saving}>
+              <Button
+                onClick={() => void handleApprove()}
+                disabled={isPersisting}
+              >
                 {saving === "approve" ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
@@ -1104,7 +1198,7 @@ export default function AdminReviewPage() {
               <Button
                 variant="secondary"
                 onClick={() => void handleSave()}
-                disabled={!!saving}
+                disabled={isPersisting}
               >
                 {saving === "save" ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -1116,7 +1210,7 @@ export default function AdminReviewPage() {
               <Button
                 variant="secondary"
                 onClick={() => void handleHold()}
-                disabled={!!saving}
+                disabled={isPersisting}
               >
                 {saving === "hold" ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -1128,7 +1222,7 @@ export default function AdminReviewPage() {
               <Button
                 variant="secondary"
                 onClick={() => void handleReset()}
-                disabled={!!saving}
+                disabled={isPersisting}
               >
                 {saving === "reset" ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

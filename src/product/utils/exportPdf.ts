@@ -44,6 +44,8 @@ const rgb = (c: RGB): Color3 => [c[0], c[1], c[2]];
  * Generate and download a polished, well-typeset PDF audit report.
  */
 export function exportReportAsPdf(report: AuditReport): void {
+  const scrutiny = report.scrutiny_transactions ?? [];
+  const scrutinyCount = Math.max(scrutiny.length, report.unassessed_fee_count ?? 0);
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pw = doc.internal.pageSize.getWidth(); // 210
   const ph = doc.internal.pageSize.getHeight(); // 297
@@ -213,21 +215,22 @@ export function exportReportAsPdf(report: AuditReport): void {
 
   // Card 1 — Total Overcharge
   const hasOvercharge = report.total_overcharge_amount > 0;
-  setFill(hasOvercharge ? C.redLight : C.greenLight);
-  setDraw(hasOvercharge ? C.red : C.green);
+  const totalColor = hasOvercharge ? C.red : scrutinyCount > 0 ? C.orange : C.green;
+  setFill(hasOvercharge ? C.redLight : scrutinyCount > 0 ? C.orangeLight : C.greenLight);
+  setDraw(totalColor);
   doc.setLineWidth(0.4);
   doc.roundedRect(mx, y, cardW, cardH, 2, 2, "FD");
   label(
-    hasOvercharge ? "Est. Potential Overcharge" : "No Likely Overcharges",
+    hasOvercharge ? "Est. Potential Overcharge" : scrutinyCount > 0 ? "Evidence Needed" : "No Quantified Excess",
     mx + 5,
     y + 8,
-    hasOvercharge ? C.red : C.green,
+    totalColor,
   );
   bigValue(
     fmt(report.total_overcharge_amount),
     mx + 5,
     y + 18,
-    hasOvercharge ? C.red : C.green,
+    totalColor,
   );
 
   // Card 2 — Violations
@@ -237,7 +240,7 @@ export function exportReportAsPdf(report: AuditReport): void {
   doc.roundedRect(card2x, y, cardW, cardH, 2, 2, "FD");
   label("Items To Review", card2x + 5, y + 8, C.orange);
   bigValue(
-    String(report.flagged_transactions.length),
+    String(report.flagged_transactions.length + scrutinyCount),
     card2x + 5,
     y + 18,
     C.dark,
@@ -260,12 +263,14 @@ export function exportReportAsPdf(report: AuditReport): void {
     high: C.red,
     critical: [127, 29, 29],
   };
-  const rc = riskCols[report.risk_level] ?? C.yellow;
+  const rc = scrutinyCount > 0 && !hasOvercharge ? C.orange : riskCols[report.risk_level] ?? C.yellow;
   doc.setFontSize(8.5);
   doc.setFont("helvetica", "bold");
   setColor(rc);
   doc.text(
-    `Review level: ${report.risk_level.toUpperCase()}  (${report.risk_score}/100)`,
+    scrutinyCount > 0 && !hasOvercharge
+      ? `Additional scrutiny required: ${scrutinyCount} transaction(s) need evidence`
+      : `Review level: ${report.risk_level.toUpperCase()}  (${report.risk_score}/100)`,
     mx,
     y,
   );
@@ -500,6 +505,30 @@ export function exportReportAsPdf(report: AuditReport): void {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   //  COMPLIANCE CHECKS TABLE
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  if (scrutinyCount > 0) {
+    heading(`Needs Additional Scrutiny (${scrutinyCount})`);
+    autoTable(doc, {
+      startY: y,
+      margin: { left: mx, right: mx },
+      head: [["Transaction # / Date", "Transaction / Amount charged", "Evidence needed / Next step"]],
+      body: scrutiny.length > 0 ? scrutiny.map((tx) => [
+        `${tx.index + 1} / ${tx.date}`,
+        sanitize(`${tx.description}\n${tx.currency} ${tx.amount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}${tx.reference ? `\nRef: ${tx.reference}` : ""}`),
+        sanitize(`${tx.evidence_needed.join("\n") || tx.reason}\n\nNext step: ${tx.next_step}${tx.citation ? `\nGuidance: ${tx.citation}` : ""}`),
+      ]) : [["", "Older report", "Transaction-level scrutiny details were not saved. Run a new audit to identify the charges and missing evidence."]],
+      theme: "grid",
+      styles: { fontSize: 8, cellPadding: 3, overflow: "linebreak", lineColor: rgb(C.border), textColor: rgb(C.dark) },
+      headStyles: { fillColor: rgb(C.orange), textColor: [255, 255, 255] },
+      columnStyles: { 0: { cellWidth: 29 }, 1: { cellWidth: 53 }, 2: { cellWidth: "auto" } },
+    });
+    y = (doc as unknown as JsPDFWithAutoTable).lastAutoTable.finalY + 5;
+    ensureSpace(14);
+    doc.setFontSize(8);
+    setColor(C.muted);
+    doc.text("Evidence missing: these charged amounts are excluded from the estimated overcharge total.", mx, y);
+    y += 5;
+  }
 
   if (report.compliance_checks.length > 0) {
     heading("CBN Fee Guidance Checks");

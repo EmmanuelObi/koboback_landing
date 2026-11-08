@@ -21,8 +21,8 @@ export default function FlaggedTransactions({
       <div className="text-center py-8 text-slate-500">
         <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
         <p>
-          No potential overcharges were flagged. Reviewed fees appear consistent
-          with CBN guidance — confirm with your bank if anything looks unusual.
+          No quantified potential overcharges were flagged. Check any items needing
+          additional scrutiny before drawing conclusions about the fees.
         </p>
       </div>
     );

@@ -211,6 +211,22 @@ export interface ComplianceCheck {
   details: string;
 }
 
+export interface ScrutinyTransaction {
+  index: number;
+  date: string;
+  description: string;
+  amount: number;
+  currency: string;
+  fee_category: string | null;
+  reference: string | null;
+  status: "needs_evidence";
+  reason: string;
+  evidence_needed: string[];
+  next_step: string;
+  rule_id: string | null;
+  citation: string | null;
+}
+
 export interface AuditReport {
   report_id: string;
   executive_summary: string;
@@ -226,6 +242,10 @@ export interface AuditReport {
   statement_period: string | null;
   bank_name: string;
   account_name: string | null;
+  scrutiny_transactions?: ScrutinyTransaction[];
+  ruleset_version?: string | null;
+  assessed_fee_count?: number;
+  unassessed_fee_count?: number;
 }
 
 function uploadFilenameFor(file: File): { filename: string; contentType: string } {

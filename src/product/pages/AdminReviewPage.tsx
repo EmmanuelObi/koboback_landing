@@ -16,6 +16,7 @@ import ProductLayout from "../components/ProductLayout";
 import PageHeader from "../ui/PageHeader";
 import Button from "../ui/Button";
 import RiskBadge from "../components/RiskBadge";
+import ScrutinyTransactions from "../components/ScrutinyTransactions";
 import { useToast } from "../ui/Toast";
 import {
   approveAdminJob,
@@ -677,6 +678,11 @@ export default function AdminReviewPage() {
               </div>
             </section>
 
+            <ScrutinyTransactions
+              transactions={draft.scrutiny_transactions ?? []}
+              pendingCount={Math.max(draft.scrutiny_transactions?.length ?? 0, draft.unassessed_fee_count ?? 0)}
+            />
+
             <section className="rounded-xl border border-slate-200/90 bg-white p-5 sm:p-6 space-y-3">
               <h3 className="text-[14px] font-semibold text-slate-950">
                 Executive summary
@@ -698,7 +704,7 @@ export default function AdminReviewPage() {
             <section className="rounded-xl border border-slate-200/90 bg-white p-5 sm:p-6 space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-[14px] font-semibold text-slate-950">
-                  Flagged transactions ({draft.flagged_transactions.length})
+                  Potential overcharges ({draft.flagged_transactions.length})
                 </h3>
                 {canDecide && (
                   <Button
@@ -722,7 +728,7 @@ export default function AdminReviewPage() {
 
               {draft.flagged_transactions.length === 0 && (
                 <p className="text-[13px] text-slate-500">
-                  No flagged items. Add findings if needed before release.
+                  No quantified potential overcharges. Check any transactions needing additional scrutiny before release.
                 </p>
               )}
 

@@ -43,9 +43,10 @@ interface AuthContextValue {
     email: string,
     password: string,
     termsAccepted: boolean,
+    redirectPath?: "/auditor",
   ) => Promise<SignUpResult>;
   signIn: (email: string, password: string) => Promise<string | null>;
-  resetPasswordForEmail: (email: string) => Promise<string | null>;
+  resetPasswordForEmail: (email: string, redirectPath?: "/auditor/reset-password") => Promise<string | null>;
   signOut: () => Promise<void>;
   getAccessToken: () => Promise<string | null>;
   refreshProfile: () => Promise<void>;
@@ -152,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: string,
       password: string,
       termsAccepted: boolean,
+      redirectPath?: "/auditor",
     ): Promise<SignUpResult> => {
       if (!termsAccepted) {
         return {
@@ -166,7 +168,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           needsEmailConfirmation: false,
         };
       }
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({ email, password,
+        ...(redirectPath ? { options: { emailRedirectTo: `${window.location.origin}${redirectPath}` } } : {}),
+      });
       if (error) {
         return {
           error: humanizeAuthError(error.message),
@@ -204,10 +208,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return error ? humanizeAuthError(error.message) : null;
   }, []);
 
-  const resetPasswordForEmail = useCallback(async (email: string) => {
+  const resetPasswordForEmail = useCallback(async (email: string, redirectPath?: "/auditor/reset-password") => {
     const supabase = getSupabaseClient();
     if (!supabase) return "Authentication is not configured.";
-    const redirectTo = `${window.location.origin}/product`;
+    const redirectTo = `${window.location.origin}${redirectPath ?? "/product"}`;
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
     });

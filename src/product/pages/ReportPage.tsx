@@ -19,6 +19,7 @@ import Button from "../ui/Button";
 import RiskBadge from "../components/RiskBadge";
 import ComplianceTable from "../components/ComplianceTable";
 import FlaggedTransactions from "../components/FlaggedTransactions";
+import ScrutinyTransactions from "../components/ScrutinyTransactions";
 import { exportReportAsPdf } from "../utils/exportPdf";
 import { useToast } from "../ui/Toast";
 import {
@@ -75,8 +76,12 @@ export default function ReportPage() {
       "The audit could not be completed automatically.",
     ) ?? false;
 
+  const scrutinyTransactions = report?.scrutiny_transactions ?? [];
+  const scrutinyCount = Math.max(scrutinyTransactions.length, report?.unassessed_fee_count ?? 0);
+  const needsScrutiny = scrutinyCount > 0;
   const isAllClear =
     !isIncompleteAudit &&
+    !needsScrutiny &&
     report != null &&
     report.flagged_transactions.length === 0 &&
     (report.total_overcharge_amount ?? 0) <= 0;
@@ -191,6 +196,8 @@ export default function ReportPage() {
           title={
             isIncompleteAudit
               ? "Audit incomplete"
+              : needsScrutiny && report.flagged_transactions.length === 0
+                ? "Additional scrutiny required"
               : isAllClear
                 ? "No likely fee issues flagged"
                 : "Potential overcharges to review"
@@ -199,7 +206,9 @@ export default function ReportPage() {
             report.statement_period ? ` · ${report.statement_period}` : ""
           }. This is an advisory review, not a legal determination.`}
           actions={
-            isIncompleteAudit ? undefined : (
+            isIncompleteAudit ? undefined : needsScrutiny && report.flagged_transactions.length === 0 ? (
+              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">Evidence needed</span>
+            ) : (
               <RiskBadge level={report.risk_level} score={report.risk_score} />
             )
           }
@@ -258,7 +267,7 @@ export default function ReportPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div
             className={`rounded-xl border bg-white p-4 ${
-              isIncompleteAudit
+              isIncompleteAudit || needsScrutiny
                 ? "border-amber-200"
                 : report.total_overcharge_amount > 0
                   ? "border-red-200"
@@ -268,7 +277,7 @@ export default function ReportPage() {
             <div className="flex items-center gap-2 mb-2">
               <Banknote
                 className={`w-4 h-4 ${
-                  isIncompleteAudit
+                  isIncompleteAudit || needsScrutiny
                     ? "text-amber-600"
                     : report.total_overcharge_amount > 0
                       ? "text-red-600"
@@ -298,8 +307,9 @@ export default function ReportPage() {
               </span>
             </div>
             <p className="text-[22px] font-semibold text-slate-950 tracking-tight">
-              {report.flagged_transactions.length}
+              {report.flagged_transactions.length + scrutinyCount}
             </p>
+            {needsScrutiny ? <p className="text-xs text-amber-800 mt-1">{scrutinyCount} need additional evidence</p> : null}
           </div>
 
           <div className="rounded-xl border border-slate-200/90 bg-white p-4">
@@ -340,6 +350,8 @@ export default function ReportPage() {
             />
           </section>
         )}
+
+        <ScrutinyTransactions transactions={scrutinyTransactions} pendingCount={scrutinyCount} />
 
         {report.compliance_checks.length > 0 && (
           <section className="rounded-xl border border-slate-200/90 bg-white p-5 sm:p-6">

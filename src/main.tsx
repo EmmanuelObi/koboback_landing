@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import App from "./App.tsx";
 import PrivacyPolicy from "./pages/PrivacyPolicy.tsx";
 import Terms from "./pages/Terms.tsx";
@@ -25,12 +25,20 @@ import CookieBanner from "./components/CookieBanner.tsx";
 import VercelAnalytics from "./components/VercelAnalytics.tsx";
 import "./index.css";
 
+const AuditorApp = React.lazy(() => import("./auditor/AuditorApp"));
+
+function IndividualCookieBanner() {
+  const { pathname } = useLocation();
+  return pathname.startsWith("/auditor") ? null : <CookieBanner />;
+}
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
         <ToastProvider>
         <Routes>
+          <Route path="/auditor/*" element={<React.Suspense fallback={<div style={{padding:64,textAlign:"center"}}>Opening auditor workspace…</div>}><AuditorApp /></React.Suspense>} />
           <Route path="/" element={<App />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<Terms />} />
@@ -129,7 +137,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             }
           />
         </Routes>
-        <CookieBanner />
+        <IndividualCookieBanner />
         <VercelAnalytics />
         </ToastProvider>
       </AuthProvider>

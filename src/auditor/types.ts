@@ -36,6 +36,8 @@ export interface Statement {
   progress: number;
   paid: boolean;
   excluded_reason?: string;
+  can_reassess?: boolean;
+  analysis_history?: {replaced_at: string; report: Record<string, unknown>}[];
 }
 export interface Finding {
   id: string;
@@ -47,7 +49,15 @@ export interface Finding {
   amount: number;
   currency: string;
   reference: string | null;
-  kind: "potential" | "scrutiny";
+  kind: "potential" | "scrutiny" | "within_limit";
+  assessment_outcome?: "within_limit" | "potential_excess" | "needs_evidence" | "needs_facts" | "rule_unavailable";
+  assessment_gap?: "rule_coverage" | "statement_facts" | "supporting_evidence" | null;
+  established_facts?: {field: string; value: unknown; source: string}[];
+  cap?: number | null;
+  review_stale?: boolean;
+  assessment_version?: number;
+  ruleset_version?: string;
+  assessment_history?: Record<string, unknown>[];
   engine_amount: number | null;
   reason: string;
   citation: string | null;

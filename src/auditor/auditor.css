@@ -1572,3 +1572,15 @@
   opacity: .35;
   cursor: not-allowed;
 }
+
+/* Assessment outcomes remain separate from reviewer decisions. */
+.auditor-shell .aw-status-within_limit { background: #e0f3e9; color: #185d44; }
+.auditor-shell .aw-status-potential_excess { background: #fff0dc; color: #945500; }
+.auditor-shell .aw-status-needs_facts { background: #edf1f8; color: #455e80; }
+.auditor-shell .aw-status-rule_unavailable { background: #eeeaf8; color: #65518f; }
+.auditor-shell .aw-toolbar { flex-wrap: wrap; }
+.auditor-shell .aw-inspector details > summary { cursor: pointer; }
+.auditor-shell .aw-assessment-summary { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.auditor-shell .aw-assessment-summary button { border: 1px solid #dce5e0; background: white; padding: 8px 10px; border-radius: 4px; font-size: 12px; color: #475b54; }
+.auditor-shell .aw-assessment-summary button[aria-pressed="true"] { border-color: #2d7356; background: #edf7f1; }
+.auditor-shell .aw-assessment-summary strong { margin-left: 6px; color: #102d28; }

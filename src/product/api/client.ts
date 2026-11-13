@@ -220,6 +220,7 @@ export interface ScrutinyTransaction {
   fee_category: string | null;
   reference: string | null;
   status: "needs_evidence";
+  assessment_gap?: "rule_coverage" | "statement_facts" | "supporting_evidence";
   reason: string;
   evidence_needed: string[];
   next_step: string;

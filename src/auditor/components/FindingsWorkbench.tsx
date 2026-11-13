@@ -3,7 +3,8 @@ import { useSearchParams, Link } from "react-router-dom";
 import { AlertTriangle, ArrowUpRight, Download, FileText, Plus, Save } from "lucide-react";
 import type { Engagement, Finding, FindingStatus, Workspace } from "../types";
 import type { AuditorData } from "../useAuditorData";
-import { dateLabel, human, money } from "../helpers";
+import { dateLabel, human, money, outcome } from "../helpers";
+import ConfirmFactsForm from "./ConfirmFactsForm";
 import { Badge, Button, Empty, Field, SearchBox } from "./ui";
 export function FindingsWorkbench({
   workspace,
@@ -22,8 +23,9 @@ export function FindingsWorkbench({
 }) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
+  const [assessment, setAssessment] = useState("all");
   const [params, setParams] = useSearchParams();
-  const filtered = findings.filter(f => (status === "all" || f.status === status) && `${f.description} ${f.reference ?? ""} ${f.date}`.toLowerCase().includes(search.toLowerCase()));
+  const filtered = findings.filter(f => (assessment === "all" || outcome(f) === assessment) && (status === "all" || f.status === status) && `${f.description} ${f.reference ?? ""} ${f.date}`.toLowerCase().includes(search.toLowerCase()));
   const selected = filtered.find(f => f.id === params.get("finding")) ?? filtered[0];
   const select = (id: string) => {
     const next = new URLSearchParams(params);
@@ -33,14 +35,15 @@ export function FindingsWorkbench({
     });
   };
   return <>
+    <div className="aw-assessment-summary" role="group" aria-label="Assessment outcomes">{["within_limit", "potential_excess", "needs_facts", "needs_evidence", "rule_unavailable"].map(value => <button key={value} type="button" aria-pressed={assessment === value} onClick={() => setAssessment(assessment === value ? "all" : value)}>{human(value)} <strong>{findings.filter(f => outcome(f) === value).length}</strong></button>)}</div>
     <div className="aw-workbench">
       <div className="aw-workbench-main">
-        <div className="aw-toolbar"><SearchBox value={search} onChange={setSearch} placeholder="Search findings" /><select aria-label="Filter findings by status" className="aw-select aw-filter" value={status} onChange={e => setStatus(e.target.value)}><option value="all">All statuses</option>{["open", "needs_evidence", "in_review", "supported", "dismissed"].map(s => <option key={s} value={s}>{human(s)}</option>)}</select></div>
-        {filtered.length ? <div className="aw-table-wrap"><table className="aw-table"><thead><tr><th>Transaction / date</th><th>Amount charged</th><th>Est. excess</th><th>Status</th></tr></thead><tbody>{filtered.map(f => <tr key={f.id} className={selected?.id === f.id ? "aw-selected" : ""}><td><button className="aw-row-button" onClick={() => select(f.id)} aria-pressed={selected?.id === f.id}><strong>{f.description}</strong><small>{dateLabel(f.date)}</small></button></td><td className="aw-numeric">{money(f.amount, f.currency)}</td><td className="aw-numeric">{f.status === "dismissed" ? "—" : f.reviewed_amount !== null ? money(f.reviewed_amount, f.currency) : f.engine_amount !== null ? money(f.engine_amount, f.currency) : "—"}</td><td><Badge status={f.status} /></td></tr>)}</tbody></table></div> : <Empty title={search || status !== "all" ? "No matching findings" : "No findings to review yet"} description={search || status !== "all" ? "Try another search or status filter." : "Findings and evidence requests will appear after statement analysis."} />}
+        <div className="aw-toolbar"><SearchBox value={search} onChange={setSearch} placeholder="Search findings" /><select aria-label="Filter by assessment outcome" className="aw-select aw-filter" value={assessment} onChange={e => setAssessment(e.target.value)}><option value="all">All assessment outcomes</option>{["within_limit", "potential_excess", "needs_facts", "needs_evidence", "rule_unavailable"].map(s => <option value={s} key={s}>{human(s)}</option>)}</select><select aria-label="Filter findings by status" className="aw-select aw-filter" value={status} onChange={e => setStatus(e.target.value)}><option value="all">All statuses</option>{["open", "needs_evidence", "in_review", "supported", "dismissed"].map(s => <option key={s} value={s}>{human(s)}</option>)}</select></div>
+        {filtered.length ? <div className="aw-table-wrap"><table className="aw-table"><thead><tr><th>Transaction / date</th><th>Amount charged</th><th>Est. excess</th><th>Assessment</th><th>Review</th></tr></thead><tbody>{filtered.map(f => <tr key={f.id} className={selected?.id === f.id ? "aw-selected" : ""}><td><button className="aw-row-button" onClick={() => select(f.id)} aria-pressed={selected?.id === f.id}><strong>{f.description}</strong><small>{dateLabel(f.date)}</small></button></td><td className="aw-numeric">{money(f.amount, f.currency)}</td><td className="aw-numeric">{f.status === "dismissed" ? "—" : f.reviewed_amount !== null ? money(f.reviewed_amount, f.currency) : f.engine_amount !== null ? money(f.engine_amount, f.currency) : "—"}</td><td><Badge status={outcome(f)} /></td><td><Badge status={f.status}>{f.review_stale ? "Review again" : f.kind === "within_limit" && !f.reviewed_at ? "No decision required" : undefined}</Badge></td></tr>)}</tbody></table></div> : <Empty title={search || status !== "all" ? "No matching findings" : "No findings to review yet"} description={search || status !== "all" ? "Try another search or status filter." : "Findings and evidence requests will appear after statement analysis."} />}
       </div>
-      {selected ? <FindingInspector key={selected.id} finding={selected} workspace={workspace} data={data} demo={demo} base={base} onEvidence={onEvidence} /> : <aside className="aw-inspector"><Empty title="Select a finding" description="Review the source transaction, evidence and decision in this panel." /></aside>}
+      {selected ? <FindingInspector key={`${selected.id}:${selected.assessment_version ?? 0}`} finding={selected} workspace={workspace} data={data} demo={demo} base={base} onEvidence={onEvidence} /> : <aside className="aw-inspector"><Empty title="Select a finding" description="Review the source transaction, evidence and decision in this panel." /></aside>}
     </div>
-    <p className="aw-review-footnote"><AlertTriangle size={13} />Unresolved evidence requests are excluded from potential excess totals. All figures remain advisory.</p>
+    <p className="aw-review-footnote"><AlertTriangle size={13} />Unassessed and stale reviewed amounts are excluded from potential excess totals. All figures remain advisory.</p>
   </>;
 }
 function FindingInspector({
@@ -84,14 +87,19 @@ function FindingInspector({
     }
   };
   return <aside className="aw-inspector" aria-label="Finding details">
-    <h2>{finding.description}</h2><Badge status={finding.status} />
+    <h2>{finding.description}</h2><Badge status={outcome(finding)} />
+    {finding.review_stale ? <p role="status" className="aw-inline-message">The assessment changed. Your previous decision and evidence are preserved; review it again before completion. Its previous reviewed amount is excluded from totals.</p> : null}
     <p className="aw-inspector-source">{statement?.filename ?? "Source statement"}{finding.source_index === null ? "" : ` · Transaction ${finding.source_index + 1}`}<br />{finding.reference ? `Ref: ${finding.reference}` : "Reference not provided"}</p>
     <div className="aw-inspector-amount"><span>Charged amount</span><strong>{money(finding.amount, finding.currency)}</strong></div>
-    <div className="aw-inspector-block"><h3>{finding.kind === "scrutiny" ? "Why it needs review" : "Why it was flagged"}</h3><p>{finding.reason}</p></div>
-    <div className="aw-inspector-block"><h3>Evidence needed</h3>{finding.evidence_needed.length ? <ul>{finding.evidence_needed.map((text, i) => <li key={i}>{text}</li>)}</ul> : <p>Verify the source facts, calculation and applicable guidance before supporting this finding.</p>}
+    <div className="aw-inspector-block"><h3>{finding.kind === "within_limit" ? "What was assessed" : finding.kind === "scrutiny" ? "Why it needs review" : "Why it was flagged"}</h3><p>{finding.reason}</p></div>
+    {finding.established_facts?.length ? <div className="aw-inspector-block"><h3>Facts established</h3>{finding.established_facts.map((fact, i) => <p key={i}><strong>{human(fact.field)}: {String(fact.value)}</strong><br /><span className="aw-note">{fact.source}</span></p>)}</div> : null}
+    {finding.kind === "within_limit" ? <div className="aw-inspector-block"><p>Charged {money(finding.amount, finding.currency)} against an evidenced allowance of {money(finding.cap ?? 0, finding.currency)}. This is an amount-only check, not a finding of full compliance.</p></div> : null}
+    <div className="aw-inspector-block"><h3>{outcome(finding) === "rule_unavailable" ? "Authority to verify" : outcome(finding) === "needs_facts" ? "Statement facts to establish" : "Supporting evidence"}</h3>{finding.evidence_needed.length ? <ul>{finding.evidence_needed.map((text, i) => <li key={i}>{text}</li>)}</ul> : <p>No additional facts are required for this amount comparison. Review any other concerns separately.</p>}
       <Button variant="secondary" disabled={locked || Boolean(data.busy)} onClick={() => onEvidence(finding.id)}><Plus />Add evidence</Button>
     </div>
     {evidence.length > 0 ? <div className="aw-inspector-block"><h3>Supporting records ({evidence.length})</h3>{evidence.map(e => <details className="aw-evidence-item" key={e.id}><summary><strong>{e.title}</strong><small>{human(e.kind)} · {e.status === "ready" ? "Available" : "Upload incomplete"}</small></summary><div><p>{e.detail}</p>{e.kind === "reference" && /^https?:\/\//i.test(e.url) ? <a className="aw-quiet-link" href={e.url} target="_blank" rel="noopener noreferrer">Open reference <ArrowUpRight size={11} /></a> : null}{e.kind === "file" ? demo ? <p className="aw-note">Demo attachment metadata only; file bytes were not uploaded.</p> : <Button variant="ghost" disabled={e.status !== "ready"} onClick={() => data.download("evidence", e.id)}><Download />Download file</Button> : null}</div></details>)}</div> : null}
+    <ConfirmFactsForm finding={finding} evidence={evidence} data={data} revision={workspace.revision} disabled={locked || Boolean(data.busy)} demo={demo} />
+    {finding.assessment_history?.length ? <details className="aw-inspector-block"><summary>Previous assessments ({finding.assessment_history.length})</summary>{finding.assessment_history.map((run,i) => <p key={i}>{String(run.ruleset_version ?? "Earlier rules")} · {String(run.reason ?? "")}</p>)}</details> : null}
     {finding.citation ? <div className="aw-inspector-block"><h3>Regulatory basis</h3><p>{finding.citation}</p></div> : null}
     {!demo && statement ? <Button variant="ghost" onClick={() => data.download("statements", statement.id)}><FileText />Open source statement</Button> : null}
     <form onSubmit={save} className="aw-inspector-block">

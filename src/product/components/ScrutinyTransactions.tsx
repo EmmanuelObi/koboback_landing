@@ -19,8 +19,8 @@ export default function ScrutinyTransactions({
             Needs additional scrutiny ({pendingCount})
           </h3>
           <p className="text-[13px] text-slate-700 mt-1 leading-relaxed">
-            Evidence is missing for these charges. Their amounts are not included in
-            the estimated overcharge total. Ask for the supporting records before drawing a conclusion.
+            Supporting facts or rule coverage remain unresolved for these charges. Their amounts are excluded from
+            the estimated overcharge total. Follow the specific next step for each entry before drawing a conclusion.
           </p>
         </div>
       </div>
@@ -47,7 +47,7 @@ export default function ScrutinyTransactions({
               <p className="text-sm font-medium text-slate-950">{tx.description}</p>
               {tx.reference ? <p className="text-xs text-slate-600 break-all">Reference: {tx.reference}</p> : null}
               <div className="text-sm text-slate-700 space-y-1">
-                <p className="font-semibold text-amber-900">Evidence needed</p>
+                <p className="font-semibold text-amber-900">{tx.assessment_gap === "rule_coverage" ? "Rule coverage unavailable" : tx.assessment_gap === "statement_facts" ? "Statement facts to establish" : "Supporting evidence needed"}</p>
                 {tx.evidence_needed.length > 0 ? (
                   <ul className="list-disc pl-5 space-y-1">
                     {tx.evidence_needed.map((evidence, index) => <li key={index}>{evidence}</li>)}

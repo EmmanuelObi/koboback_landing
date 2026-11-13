@@ -1,5 +1,5 @@
 import type { Engagement, Workspace } from "./types";
-import { clientName, dateLabel, engagementStats, excess, human, money, period } from "./helpers";
+import { clientName, dateLabel, engagementStats, excess, human, money, period, outcome } from "./helpers";
 function save(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
@@ -28,7 +28,7 @@ export async function exportWorkingPapers(workspace: Workspace, engagement: Enga
   const evidence = workspace.evidence.filter(e => e.engagement_id === engagement.id);
   const filename = `KoboBack-${engagement.title.replace(/[^a-zA-Z0-9]+/g, "-")}`;
   if (kind === "csv") {
-    const rows = [["Transaction", "Date", "Statement", "Source transaction", "Reference", "Currency", "Amount charged", "Engine estimate", "Reviewed estimate", "Included potential excess NGN", "Status", "Missing evidence", "Reviewer note", "Guidance", "Reviewed by", "Reviewed at", "Demonstration"], ...findings.map(f => [f.description, f.date, statements.find(s => s.id === f.statement_id)?.filename, f.source_index === null ? "Not available" : f.source_index + 1, f.reference, f.currency, f.amount, f.engine_amount ?? "Unassessed", f.reviewed_amount ?? "Unassessed", excess(f), human(f.status), f.evidence_needed.join("; "), f.note, f.citation, f.reviewed_by, f.reviewed_at, demo ? "YES — fictional data" : "No"])];
+    const rows = [["Transaction", "Date", "Statement", "Source transaction", "Reference", "Currency", "Amount charged", "Engine estimate", "Reviewed estimate", "Included potential excess NGN", "Assessment outcome", "Review status", "Review requires confirmation", "Established facts", "Missing facts / authority", "Reviewer note", "Guidance", "Reviewed by", "Reviewed at", "Demonstration"], ...findings.map(f => [f.description, f.date, statements.find(s => s.id === f.statement_id)?.filename, f.source_index === null ? "Not available" : f.source_index + 1, f.reference, f.currency, f.amount, f.engine_amount ?? "Unassessed", f.reviewed_amount ?? "Unassessed", excess(f), human(outcome(f)), human(f.status), f.review_stale ? "Yes" : "No", (f.established_facts ?? []).map(x => `${x.field}: ${String(x.value)} (${x.source})`).join("; "), f.evidence_needed.join("; "), f.note, f.citation, f.reviewed_by, f.reviewed_at, demo ? "YES — fictional data" : "No"])];
     save(new Blob(["\uFEFF", rows.map(row => row.map(cell).join(",")).join("\r\n")], {
       type: "text/csv;charset=utf-8"
     }), `${filename}.csv`);
@@ -84,12 +84,12 @@ export async function exportWorkingPapers(workspace: Workspace, engagement: Enga
   doc.text(`Generated ${dateLabel(new Date().toISOString())} | ${human(engagement.status)}${demo ? " | DEMONSTRATION DATA" : ""}`, 14, 46);
   const stats = engagementStats(workspace, engagement.id);
   doc.text(`Statements: ${stats.statements} | Open findings: ${stats.open} | Est. potential excess: ${money(stats.excess)}`, 14, 55);
-  const note = "Advisory working papers. Missing-evidence amounts are excluded unless a reviewer records supporting evidence and an explicit reviewed estimate. This is not a guarantee of recovery.";
+  const note = "Advisory amount-only working papers. Unassessed and stale reviewed amounts are excluded. Within assessed limit does not establish full compliance or remove other review concerns. No guarantee of recovery.";
   doc.text(doc.splitTextToSize(note, 180), 14, 63);
   autoTable(doc, {
     startY: 81,
     head: [["Transaction / Source", "Charged", "Est. excess", "Review / Evidence"]],
-    body: findings.map(f => [clean(`${f.description}\n${f.date}\n${statements.find(s => s.id === f.statement_id)?.filename ?? ""}${f.source_index === null ? "" : ` / transaction ${f.source_index + 1}`}\n${f.reference ?? ""}`), money(f.amount, f.currency), f.status === "dismissed" ? "Dismissed" : f.reviewed_amount === null && f.engine_amount === null ? "Unassessed" : money(excess(f)), clean(`${human(f.status)}\n${f.reason}\n${f.evidence_needed.length ? `Evidence needed: ${f.evidence_needed.join("; ")}\n` : ""}${f.note ? `Reviewer: ${f.note}\n` : ""}${f.citation ?? ""}`)]),
+    body: findings.map(f => [clean(`${f.description}\n${f.date}\n${statements.find(s => s.id === f.statement_id)?.filename ?? ""}${f.source_index === null ? "" : ` / transaction ${f.source_index + 1}`}\n${f.reference ?? ""}`), money(f.amount, f.currency), f.status === "dismissed" ? "Dismissed" : f.reviewed_amount === null && f.engine_amount === null ? "Unassessed" : money(excess(f)), clean(`${human(outcome(f))} | Review: ${human(f.status)}${f.review_stale ? " (review again)" : ""}\n${f.reason}\n${f.evidence_needed.length ? `Evidence needed: ${f.evidence_needed.join("; ")}\n` : ""}${f.established_facts?.length ? `Facts: ${f.established_facts.map(x => `${x.field}: ${String(x.value)} (${x.source})`).join("; ")}\n` : ""}${f.note ? `Reviewer: ${f.note}\n` : ""}${f.citation ?? ""}`)]),
     styles: {
       fontSize: 8,
       cellPadding: 3,

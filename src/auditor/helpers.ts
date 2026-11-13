@@ -24,7 +24,7 @@ export function outcome(finding: Finding): string {
   if (finding.kind === "potential") return "potential_excess";
   if (finding.assessment_gap === "rule_coverage" || /historical authority|not yet effective|circular|authority is missing|universal numeric cap|foreign currency/i.test(finding.reason)) return "rule_unavailable";
   if (finding.assessment_gap === "statement_facts") return "needs_facts";
-  if (finding.assessment_gap === "supporting_evidence" || /actual sms|cost and transaction-origin|negotiated rate|cost-recovery/i.test(finding.reason)) return "needs_evidence";
+  if (finding.assessment_gap === "supporting_evidence" || /actual sms|actual delivery cost|cost and transaction-origin|negotiated rate|cost-recovery/i.test(`${finding.reason} ${finding.evidence_needed.join(" ")}`)) return "needs_evidence";
   return "needs_facts";
 }
 export function engagementStats(workspace: Workspace, id?: string) {

@@ -12,6 +12,8 @@ const facts: Fact[] = [
   {key: "covered_quarters", label: "Quarters covered by this charge", type: "number", min: 1, step: "1"},
   {key: "fee_basis", label: "Fee tax basis", type: "choice", choices: [["base", "Base fee (excluding VAT)"], ["vat_inclusive", "Total inclusive of VAT"]]},
   {key: "vat_rate", label: "VAT rate (decimal, e.g. 0.075)", type: "number", min: 0, max: 1, step: "0.001"},
+  {key: "vat_taxable_base", label: "Separate taxable-service base for this VAT entry", type: "number", min: 0, step: "0.01"},
+  {key: "vat_service_taxable", label: "Underlying service established as taxable", type: "choice", choices: yesNo},
   {key: "sms_origin", label: "SMS transaction origin", type: "choice", choices: [["customer", "Customer-induced"], ["bank", "Bank-induced"]]},
   {key: "sms_actual_total_cost", label: "Actual total SMS cost for this billed entry", type: "number", min: 0, step: "0.01"},
   {key: "transfer_purpose", label: "Transfer purpose", type: "choice", choices: [["salary", "Salary"], ["other", "Other evidenced purpose"]]},
@@ -23,7 +25,7 @@ const facts: Fact[] = [
 export default function ConfirmFactsForm({finding, evidence, data, revision, disabled, demo}: {
   finding: Finding; evidence: Evidence[]; data: AuditorData; revision: number; disabled: boolean; demo: boolean;
 }) {
-  const initialKey = /sms|alert/i.test(finding.description) ? "sms_actual_total_cost" : /tax basis/i.test(finding.reason) ? "fee_basis" : /card/i.test(finding.description) ? "card_currency" : "confirmed_fee_category";
+  const initialKey = /sms|alert/i.test(finding.description) ? "sms_actual_total_cost" : /vat/i.test(finding.description) ? "vat_taxable_base" : /tax basis/i.test(finding.reason) ? "fee_basis" : /card/i.test(finding.description) ? "card_currency" : "confirmed_fee_category";
   const [key, setKey] = useState(initialKey);
   const [value, setValue] = useState("");
   const [source, setSource] = useState("");
